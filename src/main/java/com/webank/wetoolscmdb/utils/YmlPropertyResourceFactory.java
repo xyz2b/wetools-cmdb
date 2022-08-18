@@ -15,8 +15,8 @@ import java.util.Optional;
  */
 public class YmlPropertyResourceFactory implements PropertySourceFactory {
 
-    private static String YML = ".yml";
-    private static String YAML = ".yaml";
+    private static final String YML = ".yml";
+    private static final String YAML = ".yaml";
     /**
      *
      * @param name：@PropertySource 注解 name 的值

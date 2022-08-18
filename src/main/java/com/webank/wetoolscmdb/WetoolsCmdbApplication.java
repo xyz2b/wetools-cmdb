@@ -3,12 +3,12 @@ package com.webank.wetoolscmdb;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.util.concurrent.atomic.LongAdder;
+
 @SpringBootApplication
 public class WetoolsCmdbApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(WetoolsCmdbApplication.class, args);
-
 
 //        String uri = "mongodb://localhost:27017/?maxPoolSize=20&w=majority";
 //        MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(new ConnectionString(uri))
