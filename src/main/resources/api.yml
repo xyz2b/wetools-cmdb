@@ -1,0 +1,4 @@
+cmdb:
+  url: http://uat.cmdb.weoa.com
+  authUser: xyzjiao
+  pageSize: 500

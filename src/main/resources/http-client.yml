@@ -1,0 +1,10 @@
+http:
+  client:
+    # 基础连接参数
+    connectionRequestTimeout: 3000              # 建立连接的超时时间，ms
+    connectTimeout: 3000                        # 客户端和服务器建立连接的timeout，ms
+    readTimeout: 120000                         # Socket的读超时时间，ms
+    # 客户端连接池参数
+    connectionsMaxTotal:  5000                  # 连接池最大连接数
+    connectionsMaxPerRoute: 1000                # 每个主机的并发
+    connectionsValidateAfterInactivity: 10000   # 空闲连接过期时间，ms

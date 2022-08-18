@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: wetools-cmdb
+logging:
+  level:
+    root: info
+server:
+  port: 8080
