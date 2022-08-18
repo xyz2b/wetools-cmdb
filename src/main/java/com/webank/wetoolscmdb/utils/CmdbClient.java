@@ -64,12 +64,7 @@ public class CmdbClient {
     public CmdbResponseData getCiData(String type) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
 
-        CmdbResponse response = firstResponse;
-        while (!isLastPage(response)) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getCiAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -78,12 +73,7 @@ public class CmdbClient {
     public CmdbResponseData getCiData(String type, Map<String, String> filter, List<String> resultColumn) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
 
-        CmdbResponse response = firstResponse;
-        while (!isLastPage(response)) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getCiAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -92,12 +82,7 @@ public class CmdbClient {
     public CmdbResponseData getCiData(String type, Map<String, String> filter) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
 
-        CmdbResponse response = firstResponse;
-        while (!isLastPage(response)) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getCiAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -106,12 +91,7 @@ public class CmdbClient {
     public CmdbResponseData getCiData(String type, List<String> resultColumn) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), resultColumn);
 
-        CmdbResponse response = firstResponse;
-        while (!isLastPage(response)) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getCiAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -120,6 +100,15 @@ public class CmdbClient {
     public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, String> filter, List<String> resultColumn) {
         CmdbResponse response = standardQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
         return response.getData();
+    }
+
+    private void getCiAllPageData(String type, CmdbResponse firstResponse) {
+        CmdbResponse response = firstResponse;
+        while (!isLastPage(response)) {
+            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+
+            firstResponse.getData().getContent().addAll(response.getData().getContent());
+        }
     }
 
     // 判断是不是最后一页数据
@@ -133,13 +122,7 @@ public class CmdbClient {
     public CmdbResponseData getTemplateData(String type) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
 
-        CmdbResponse response = firstResponse;
-        // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
-        while (response.getHeaders().getContentRows() != 0) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getTemplateAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -148,13 +131,7 @@ public class CmdbClient {
     public CmdbResponseData getTemplateData(String type, Map<String, String> filter, List<String> resultColumn) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
 
-        CmdbResponse response = firstResponse;
-        // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
-        while (response.getHeaders().getContentRows() != 0) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getTemplateAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -163,13 +140,7 @@ public class CmdbClient {
     public CmdbResponseData getTemplateData(String type, Map<String, String> filter) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
 
-        CmdbResponse response = firstResponse;
-        // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
-        while (response.getHeaders().getContentRows() != 0) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
-
-            firstResponse.getData().getContent().addAll(response.getData().getContent());
-        }
+        getTemplateAllPageData(type, firstResponse);
 
         return firstResponse.getData();
     }
@@ -178,6 +149,12 @@ public class CmdbClient {
     public CmdbResponseData getTemplateData(String type, List<String> resultColumn) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), resultColumn);
 
+        getTemplateAllPageData(type, firstResponse);
+
+        return firstResponse.getData();
+    }
+
+    private void getTemplateAllPageData(String type, CmdbResponse firstResponse) {
         CmdbResponse response = firstResponse;
         // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
         while (response.getHeaders().getContentRows() != 0) {
@@ -185,8 +162,6 @@ public class CmdbClient {
 
             firstResponse.getData().getContent().addAll(response.getData().getContent());
         }
-
-        return firstResponse.getData();
     }
 
     // 获取某个Template指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
