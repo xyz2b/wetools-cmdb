@@ -1,3 +1,4 @@
+# mongodb客户端配置
 mongodb:
   # 基础连接参数
   database: wetools-cmdb                                # 要连接的数据库

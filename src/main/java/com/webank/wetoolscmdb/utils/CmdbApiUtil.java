@@ -20,7 +20,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class CmdbClient {
+public class CmdbApiUtil {
     @Autowired
     private CmdbApiProperties props;
     @Autowired
@@ -158,7 +158,7 @@ public class CmdbClient {
         CmdbResponse response = firstResponse;
         // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
         while (response.getHeaders().getContentRows() != 0) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+            response = templateQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
 
             firstResponse.getData().getContent().addAll(response.getData().getContent());
         }
@@ -191,36 +191,37 @@ public class CmdbClient {
 
         CmdbResponse response = rest.postForObject(url, request, CmdbResponse.class);
 
-        checkCmdbResponse(response, request);
+        checkCmdbResponse(response, request, url);
 
         return response;
     }
 
-    private static void checkCmdbResponse(CmdbResponse response, CmdbRequest request) {
+    private static void checkCmdbResponse(CmdbResponse response, CmdbRequest request, String url) {
+        log.debug("request cmdb body: " + request.toString());
         if (response == null) {
-            log.error("request cmdb error: response is null, type: " + request.getType());
+            log.error("request cmdb error: response is null, type: [" + request.getType() + "], url: [" + url + "]");
             throw new WetoolsCmdbException(WetoolsCmdbExceptionCode.REQUEST_CMDB_ERROR, "request cmdb error: response is null, type: " + request.getType());
         }
 
         if (response.getHeaders() == null) {
-            log.error("request cmdb error: response headers is null, type: " + request.getType());
+            log.error("request cmdb error: response headers is null, type: [" + request.getType() + "], url: [" + url + "]");
             throw new WetoolsCmdbException(WetoolsCmdbExceptionCode.REQUEST_CMDB_ERROR, "request cmdb error: response headers is null, type: " + request.getType());
         }
 
         if (response.getHeaders().getRetCode() != 0) {
-            log.error("request cmdb error: " + response.getHeaders().getErrorInfo() + ", type: " + request.getType());
+            log.error("request cmdb error: [" + response.getHeaders().getErrorInfo() + "], type: [" + request.getType() + "], url: [" + url + "]");
             throw new WetoolsCmdbException(WetoolsCmdbExceptionCode.REQUEST_CMDB_ERROR, "request cmdb error: " + response.getHeaders().getErrorInfo() + ", type: " + request.getType());
         }
 
         if (response.getData() == null) {
-            log.error("request cmdb error: response data is null, type: " + request.getType());
+            log.error("request cmdb error: response data is null, type: [" + request.getType() + "], url: [" + url + "]");
             throw new WetoolsCmdbException(WetoolsCmdbExceptionCode.REQUEST_CMDB_ERROR, "request cmdb error: response data is null, type: " + request.getType());
         }
 
         List<Map<String, Object>> content = response.getData().getContent();
 
         if (content == null) {
-            log.error("request cmdb error: response data content is null, type: " + request.getType());
+            log.error("request cmdb error: response data content is null, type: [" + request.getType() + "], url: [" + url + "]");
             throw new WetoolsCmdbException(WetoolsCmdbExceptionCode.REQUEST_CMDB_ERROR, "request cmdb error: response data content is null, type: " + request.getType());
         }
     }

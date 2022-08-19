@@ -17,7 +17,7 @@ import javax.validation.constraints.NotEmpty;
 @ToString
 @Configuration
 @ConfigurationProperties(prefix = "mongodb")
-@PropertySource(value = {"classpath:mongodb.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "mongodb.yml", factory = YmlPropertyResourceFactory.class)
+@PropertySource(value = {"classpath:mongodb.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "config/mongodb.yml", factory = YmlPropertyResourceFactory.class)
 @Validated
 public class MongoProperties {
     /**

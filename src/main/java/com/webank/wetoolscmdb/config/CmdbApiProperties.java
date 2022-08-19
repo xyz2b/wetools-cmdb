@@ -11,11 +11,10 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 @Configuration("CmdbApiConfig")
 @ConfigurationProperties(prefix = "cmdb")
-@PropertySource(value = {"classpath:api.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "api.yml", factory = YmlPropertyResourceFactory.class)
+@PropertySource(value = {"classpath:api.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "config/api.yml", factory = YmlPropertyResourceFactory.class)
 @Getter
 @Setter
 @ToString

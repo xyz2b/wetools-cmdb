@@ -16,7 +16,7 @@ import javax.validation.constraints.Min;
 @ToString
 @Configuration("RestTemplateProperties")
 @ConfigurationProperties(prefix = "http.client")
-@PropertySource(value = {"classpath:http-client.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "http-client.yml", factory = YmlPropertyResourceFactory.class)
+@PropertySource(value = {"classpath:http-client.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "config/http-client.yml", factory = YmlPropertyResourceFactory.class)
 @Validated
 public class RestTemplateProperties {
     /**

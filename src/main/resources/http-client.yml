@@ -1,3 +1,4 @@
+# http客户端配置
 http:
   client:
     # 基础连接参数
