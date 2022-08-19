@@ -1,7 +1,14 @@
 package com.webank.wetoolscmdb.mapper.intf.mongo;
 
-import com.webank.wetoolscmdb.model.entity.mongo.Ci;
+import com.mongodb.client.MongoCollection;
+import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
+import org.bson.Document;
+
+import java.util.List;
 
 public interface CiRepository {
-    void saveCi(Ci ci);
+    MongoCollection<Document> createCiCollection(String env);
+    CiDao saveOneCi(CiDao ciDao, String env);
+    CiDao insertOneCi(CiDao ciDao, String env);
+    List<CiDao> insertAllCi(List<CiDao> ciDao, String env);
 }

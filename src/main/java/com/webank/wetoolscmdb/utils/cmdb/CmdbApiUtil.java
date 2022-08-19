@@ -1,13 +1,14 @@
-package com.webank.wetoolscmdb.utils;
+package com.webank.wetoolscmdb.utils.cmdb;
 
 import com.webank.wetoolscmdb.config.CmdbApiProperties;
 import com.webank.wetoolscmdb.constant.consist.CmdbApi;
-import com.webank.wetoolscmdb.constant.consist.CmdbQueryDataType;
+import com.webank.wetoolscmdb.constant.consist.CmdbQueryApiType;
 import com.webank.wetoolscmdb.constant.consist.WetoolsCmdbExceptionCode;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbRequest;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
+import com.webank.wetoolscmdb.utils.exception.WetoolsCmdbException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -173,14 +174,14 @@ public class CmdbApiUtil {
     // CMDB统一查询接口
     private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging,
                                                   Map<String, String> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbQueryDataType.STANDARD_QUERY + ".json";
+        String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.STANDARD_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 
     // CMDB综合查询接口
     private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging,
                                                   Map<String, String> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbQueryDataType.TEMPLATE_QUERY + ".json";
+        String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.TEMPLATE_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 

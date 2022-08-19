@@ -2,8 +2,8 @@ package com.webank.wetoolscmdb.mapper.impl.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.constant.consist.CiCollectionNamePrefix;
-import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
-import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
+import com.webank.wetoolscmdb.mapper.intf.mongo.FiledRepository;
+import com.webank.wetoolscmdb.model.entity.mongo.FiledDao;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -12,31 +12,34 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class CiRepositoryImpl implements CiRepository {
+public class FiledRepositoryImpl implements FiledRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Override
-    public MongoCollection<Document> createCiCollection(String env) {
-        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+    public MongoCollection<Document> createFiledCollection(String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         return mongoTemplate.createCollection(collectionName);
     }
 
     @Override
-    public CiDao saveOneCi(CiDao ciDao, String env) {
+    public FiledDao saveOneFiled(FiledDao ciFiledDao, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
-        return mongoTemplate.save(ciDao, collectionName);
+
+        return mongoTemplate.save(ciFiledDao, collectionName);
     }
 
     @Override
-    public CiDao insertOneCi(CiDao ciDao, String env) {
+    public FiledDao insertOneFiled(FiledDao filedDao, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
-        return mongoTemplate.insert(ciDao, collectionName);
+
+        return mongoTemplate.insert(filedDao, collectionName);
     }
 
     @Override
-    public List<CiDao> insertAllCi(List<CiDao> ciDaoList, String env) {
+    public List<FiledDao> insertAllFiled(List<FiledDao> filedListDao, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
-        return (List<CiDao>) mongoTemplate.insert(ciDaoList, collectionName);
+
+        return (List<FiledDao>) mongoTemplate.insert(filedListDao, collectionName);
     }
 }

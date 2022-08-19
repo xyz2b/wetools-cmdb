@@ -2,7 +2,7 @@ package com.webank.wetoolscmdb.util;
 
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
-import com.webank.wetoolscmdb.utils.CmdbApiUtil;
+import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

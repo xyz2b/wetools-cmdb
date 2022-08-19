@@ -1,6 +1,6 @@
 package com.webank.wetoolscmdb.mapper.impl;
 
-import com.webank.wetoolscmdb.model.entity.mongo.Ci;
+import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,18 +10,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class CiRepositoryTest {
+public class CiDaoRepositoryTest {
     @Autowired
     CiRepository ciRepository;
 
     @Test
     public void testSaveCi() {
-        Ci ci = new Ci();
-        ci.setCnName("应用域");
-        ci.setEnName("wb_Applicationdomain_111");
-        ci.setCmdb(true);
-        ci.setDelete(false);
+        CiDao ciDao = new CiDao();
+        ciDao.setCnName("应用域");
+        ciDao.setEnName("wb_Applicationdomain_111");
+        ciDao.setCmdb(true);
+        ciDao.setDelete(false);
 
-        ciRepository.saveCi(ci);
     }
 }

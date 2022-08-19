@@ -2,7 +2,7 @@ package com.webank.wetoolscmdb.model.dto.cmdb;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.webank.wetoolscmdb.constant.consist.CmdbQueryResponseDataType;
-import com.webank.wetoolscmdb.utils.WetoolsCmdbException;
+import com.webank.wetoolscmdb.utils.exception.WetoolsCmdbException;
 import lombok.Data;
 
 import java.util.HashMap;

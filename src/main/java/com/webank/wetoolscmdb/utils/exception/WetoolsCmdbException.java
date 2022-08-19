@@ -1,4 +1,4 @@
-package com.webank.wetoolscmdb.utils;
+package com.webank.wetoolscmdb.utils.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

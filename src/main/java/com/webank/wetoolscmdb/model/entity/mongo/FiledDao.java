@@ -1,9 +1,6 @@
 package com.webank.wetoolscmdb.model.entity.mongo;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.springframework.data.annotation.CreatedDate;
@@ -18,8 +15,7 @@ import java.util.Date;
 @Data
 @Accessors(chain = true)
 @ToString
-@Document(collection = "cmdb.metadata.ci")
-public class Ci implements Serializable {
+public class FiledDao implements Serializable {
     private static final long serialVersionUID = -3258839839160856613L;
 
     @Id
@@ -30,17 +26,22 @@ public class Ci implements Serializable {
     @Field("en_name")
     private String enName;
     @Field("is_delete")
-    private boolean isDelete;
+    private Boolean isDelete;
     @Field("is_cmdb")
-    private boolean isCmdb;
-    @Field("ci_data_last_update_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
-    private Date cIDataLastUpdateDate;
+    private Boolean isCmdb;
+    @Field("is_display")
+    private Boolean isDisplay;
+    @Field("type")
+    private int type;
+    @Field("predict_length")
+    private int predictLength;
+    @Field("ci")
+    private String ci;
     @Field("created_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
+    @CreatedDate
     private Date createdDate;
     @Field("updated_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
+    @LastModifiedDate
     private Date updatedDate;
     @Field("updated_by")
     private String updatedBy;
