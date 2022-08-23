@@ -3,9 +3,11 @@ package com.webank.wetoolscmdb.service.impl;
 import com.webank.wetoolscmdb.constant.consist.CiFiledType;
 import com.webank.wetoolscmdb.constant.consist.CmdbQueryResponseDataType;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
+import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
+import com.webank.wetoolscmdb.service.intf.CiService;
 import com.webank.wetoolscmdb.service.intf.CmdbService;
 import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
 import com.webank.wetoolscmdb.utils.cocurrent.CallbackTask;
@@ -23,6 +25,8 @@ import java.util.Map;
 public class CmdbServiceImpl implements CmdbService {
     @Autowired
     CmdbApiUtil cmdbApiUtil;
+    @Autowired
+    CiService ciService;
 
     @Override
     public List<CiField> getCmdbCiAllField(Ci ci) {
@@ -93,27 +97,47 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
-    public void syncManyColumnCmdbAllDataAsync(String type, List<String> resultColumn) {
+    public void syncManyColumnCmdbAllDataAsync(Ci ci) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
-
             @Override
             public Integer execute() throws Exception {
+                String type = ci.getEnName();
+
+                List<String> resultColumn = new ArrayList<>();
+                for(CiField ciField : ci.getFiledList()) {
+                    resultColumn.add(ciField.getEnName());
+                }
                 // TODO: sync many column cmdb all data
+                // 只有CI不是updating状态也可以去更新同步
+                if(ciService.isUpdating(ci)) {
+                    return -1;
+                }
+
+                // 从CMDB同步数据
+
                 return 0;
             }
 
             @Override
             public void onSuccess(Integer syncSuccessDataCount) {
+                String type = ci.getEnName();
+
                 int totalDataCount = getCmdbDataAllCount(type);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type " + type + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
+                } else if (syncSuccessDataCount == -1) {
+                    log.info("type " + type + " is updating!!!, give up this sync.");
                 } else {
                     log.info("sync data from cmdb success, type " + type + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
+                    // TODO: 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
+
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
+                String type = ci.getEnName();
+
                 log.error("sync data from cmdb job error, type " + type + ", message " + t.getMessage());
             }
         });

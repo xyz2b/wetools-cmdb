@@ -56,11 +56,22 @@ public class CiRepositoryImpl implements CiRepository {
     }
 
     @Override
-    public CiDao findCi(String name, String env) {
+    public CiDao findCi(String ciName, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
         Query query = new Query();
-        Criteria criteria = Criteria.where("en_name").is(name);
+        Criteria criteria = Criteria.where("en_name").is(ciName);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, CiDao.class, collectionName);
+    }
+
+    @Override
+    public Boolean isUpdating(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where("en_name").is(ciName);
+        query.addCriteria(criteria);
+        CiDao ciDao = mongoTemplate.findOne(query, CiDao.class, collectionName);
+        assert ciDao != null;
+        return ciDao.getIsUpdating();
     }
 }

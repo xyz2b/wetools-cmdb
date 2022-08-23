@@ -31,6 +31,7 @@ public class CiServiceImpl implements CiService {
         transfer(ci, ciDao);
         ciDao.setIsDelete(false);
         Date now = new Date();
+        ciDao.setIsUpdating(false);
         ciDao.setCreatedDate(now);
         ciDao.setUpdatedDate(now);
         ciDao.setCIDataLastUpdateDate(now);
@@ -65,6 +66,11 @@ public class CiServiceImpl implements CiService {
     @Override
     public boolean existedCi(Ci ci) {
         return ciRepository.findCi(ci.getEnName(), ci.getEnv()) != null;
+    }
+
+    @Override
+    public boolean isUpdating(Ci ci) {
+        return ciRepository.isUpdating(ci.getEnName(), ci.getEnv());
     }
 
     private void transfer(Ci ci, CiDao ciDao) {

@@ -11,7 +11,7 @@ public interface CmdbService {
 
     // 返回同步成功的记录数
     void syncCmdbAllDataAsync(String type);
-    void syncManyColumnCmdbAllDataAsync(String type, List<String> resultColumn);
+    void syncManyColumnCmdbAllDataAsync(Ci ci);
 
     int syncManyColumnCmdbDataByFilter(String type, Map<String, String> filter, List<String> resultColumn);
 

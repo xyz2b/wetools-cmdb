@@ -10,4 +10,5 @@ public interface CiService {
     boolean createCiMetaCollection(Ci ci);
     boolean existedCiMetaCollection(Ci ci);
     boolean existedCi(Ci ci);
+    boolean isUpdating(Ci ci);
 }

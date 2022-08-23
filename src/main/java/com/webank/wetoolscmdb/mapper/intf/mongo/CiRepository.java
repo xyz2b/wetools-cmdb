@@ -13,5 +13,7 @@ public interface CiRepository {
     CiDao saveOneCi(CiDao ciDao, String env);
     CiDao insertOneCi(CiDao ciDao, String env);
     List<CiDao> insertAllCi(List<CiDao> ciDao, String env);
-    CiDao findCi(String name, String env);
+    CiDao findCi(String ciName, String env);
+
+    Boolean isUpdating(String ciName, String env);
 }

@@ -33,6 +33,8 @@ public class CiDao implements Serializable {
     private Date cIDataLastUpdateDate;
     @Field("syn_cmdb_cycle")
     private int synCmdbCycle;
+    @Field("is_updating")
+    private Boolean isUpdating;
     @Field("created_date")
     @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
     private Date createdDate;

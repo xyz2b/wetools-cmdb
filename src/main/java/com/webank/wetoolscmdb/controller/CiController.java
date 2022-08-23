@@ -62,16 +62,8 @@ public class CiController {
         fieldService.createField(ci);
 
         if(ci.getIsCmdb()) {
-            List<String> resultColumn = new ArrayList<>();
-            for(CiField ciField : ci.getFiledList()) {
-                resultColumn.add(ciField.getEnName());
-            }
-
             // 异步任务，分批全量同步CMDB数据
-            cmdbService.syncManyColumnCmdbAllDataAsync(ci.getEnName(), resultColumn);
-
-            // TODO: 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
-
+            cmdbService.syncManyColumnCmdbAllDataAsync(ci);
         }
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
