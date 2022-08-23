@@ -24,5 +24,5 @@ public class Ci {
     @Field("syn_cmdb_cycle")
     private int synCmdbCycle;
     @Field("filed_list")
-    private List<CiFiled> filedList;
+    private List<CiField> filedList;
 }

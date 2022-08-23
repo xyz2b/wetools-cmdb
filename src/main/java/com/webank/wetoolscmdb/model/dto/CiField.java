@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CiFiled {
+public class CiField {
     @Field("cn_name")
     private String cnName;
     @Field("en_name")

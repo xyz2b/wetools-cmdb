@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface CiRepository {
     MongoCollection<Document> createCiCollection(String env);
+    MongoCollection<Document> getCiCollection(String env);
+    boolean ciCollectionExisted(String env);
     CiDao saveOneCi(CiDao ciDao, String env);
     CiDao insertOneCi(CiDao ciDao, String env);
     List<CiDao> insertAllCi(List<CiDao> ciDao, String env);

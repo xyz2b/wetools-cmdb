@@ -2,7 +2,6 @@ package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
-import com.webank.wetoolscmdb.mapper.intf.mongo.FiledRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.service.intf.CiService;
@@ -27,13 +26,6 @@ public class CiServiceImpl implements CiService {
     public boolean createCi(Ci ci) {
         String env = ci.getEnv();
 
-        // 创建元数据集合
-        MongoCollection<Document> ciCollection = ciRepository.createCiCollection(env);
-        if (ciCollection == null) {
-            log.error("create ci collection failed: " + env);
-            return false;
-        }
-
         // 将元数据插入元数据集合中
         CiDao ciDao = new CiDao();
         transfer(ci, ciDao);
@@ -43,18 +35,31 @@ public class CiServiceImpl implements CiService {
         ciDao.setUpdatedDate(now);
         ciDao.setCIDataLastUpdateDate(now);
 
-        ciDao = ciRepository.saveOneCi(ciDao, env);
-        if (ciDao == null) {
+        CiDao rst = ciRepository.insertOneCi(ciDao, env);
+        if (rst == null) {
             log.error("insert ci failed: " + ciDao);
             return false;
         }
 
-        if(ci.getFiledList().size() != 0) {
-            fieldService.createFiled(ci.getFiledList(), ciDao.getId(), env);
-        }
-
-
         return true;
+    }
+
+    @Override
+    public boolean createCiMetaCollection(Ci ci) {
+        String env = ci.getEnv();
+        // 创建元数据集合
+        MongoCollection<Document> ciCollection = ciRepository.createCiCollection(env);
+        if (ciCollection == null) {
+            log.error("create ci collection failed: " + env);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean existedCiMetaCollection(Ci ci) {
+        String env = ci.getEnv();
+        return ciRepository.ciCollectionExisted(env);
     }
 
     private void transfer(Ci ci, CiDao ciDao) {

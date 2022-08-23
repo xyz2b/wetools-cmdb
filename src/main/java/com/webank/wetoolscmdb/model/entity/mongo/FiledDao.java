@@ -32,7 +32,7 @@ public class FiledDao implements Serializable {
     @Field("is_display")
     private Boolean isDisplay;
     @Field("type")
-    private int type;
+    private String type;
     @Field("predict_length")
     private int predictLength;
     @Field("ci")

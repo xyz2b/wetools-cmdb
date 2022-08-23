@@ -23,6 +23,19 @@ public class CiRepositoryImpl implements CiRepository {
     }
 
     @Override
+    public MongoCollection<Document> getCiCollection(String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        // getCollection不能用于判断集合是否存在
+        return mongoTemplate.getCollection(collectionName);
+    }
+
+    @Override
+    public boolean ciCollectionExisted(String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        return mongoTemplate.collectionExists(collectionName);
+    }
+
+    @Override
     public CiDao saveOneCi(CiDao ciDao, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
         return mongoTemplate.save(ciDao, collectionName);
