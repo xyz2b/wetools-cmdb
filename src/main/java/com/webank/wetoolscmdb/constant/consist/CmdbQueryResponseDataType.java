@@ -7,4 +7,5 @@ public class CmdbQueryResponseDataType {
     public static final String TEXT = "text";
     public static final String TEXTAREA = "textArea";
     public static final String NUMBER = "number";
+    public static final String HIDDEN = "hidden";
 }

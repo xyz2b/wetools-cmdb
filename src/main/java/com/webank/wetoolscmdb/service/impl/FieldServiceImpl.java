@@ -4,9 +4,8 @@ import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
-import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.model.entity.mongo.FiledDao;
-import com.webank.wetoolscmdb.service.intf.FiledService;
+import com.webank.wetoolscmdb.service.intf.FieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class FieldServiceImpl implements FiledService {
+public class FieldServiceImpl implements FieldService {
     @Autowired
     FieldRepository fieldRepository;
 

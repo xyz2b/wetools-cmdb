@@ -24,21 +24,7 @@ public class CmdbResponseData {
 
         for(Map<String, Object> c : content) {
             for(Map.Entry<String, Object> entry : c.entrySet()) {
-                if(cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.REF)) {
 
-                } else if (cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.MULTI_REF)) {
-
-                } else if (cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.SELECT)) {
-
-                } else if (cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.TEXT)) {
-
-                } else if (cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.TEXTAREA)) {
-
-                } else if (cmdbResponseDataHeaders.get(entry.getKey()).getDataType().equals(CmdbQueryResponseDataType.NUMBER)) {
-
-                } else {
-                    throw new WetoolsCmdbException(1, "unknown cmdb response data type");
-                }
             }
         }
 

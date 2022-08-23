@@ -7,6 +7,8 @@ import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -51,5 +53,14 @@ public class CiRepositoryImpl implements CiRepository {
     public List<CiDao> insertAllCi(List<CiDao> ciDaoList, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
         return (List<CiDao>) mongoTemplate.insert(ciDaoList, collectionName);
+    }
+
+    @Override
+    public CiDao findCi(String name, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where("en_name").is(name);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query, CiDao.class, collectionName);
     }
 }

@@ -30,21 +30,21 @@ public class FieldRepositoryImpl implements FieldRepository {
 
     @Override
     public FiledDao saveOneField(FiledDao ciFiledDao, String env) {
-        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
 
         return mongoTemplate.save(ciFiledDao, collectionName);
     }
 
     @Override
     public FiledDao insertOneField(FiledDao filedDao, String env) {
-        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
 
         return mongoTemplate.insert(filedDao, collectionName);
     }
 
     @Override
     public List<FiledDao> insertAllField(List<FiledDao> filedListDao, String env) {
-        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
 
         return (List<FiledDao>) mongoTemplate.insert(filedListDao, collectionName);
     }

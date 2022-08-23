@@ -5,7 +5,7 @@ import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.service.intf.CiService;
-import com.webank.wetoolscmdb.service.intf.FiledService;
+import com.webank.wetoolscmdb.service.intf.FieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ import java.util.Date;
 @Slf4j
 public class CiServiceImpl implements CiService {
     @Autowired
-    FiledService fieldService;
+    FieldService fieldService;
 
     @Autowired
     CiRepository ciRepository;
@@ -62,7 +62,15 @@ public class CiServiceImpl implements CiService {
         return ciRepository.ciCollectionExisted(env);
     }
 
+    @Override
+    public boolean existedCi(Ci ci) {
+        return ciRepository.findCi(ci.getEnName(), ci.getEnv()) != null;
+    }
+
     private void transfer(Ci ci, CiDao ciDao) {
+        if(ci.getIsCmdb()) {
+            ciDao.setSynCmdbCycle(ci.getSynCmdbCycle());
+        }
         ciDao.setIsCmdb(ci.getIsCmdb());
         ciDao.setEnName(ci.getEnName());
         ciDao.setCnName(ci.getCnName());

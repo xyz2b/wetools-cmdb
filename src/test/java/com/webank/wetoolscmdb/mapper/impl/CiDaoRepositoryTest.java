@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class CiDaoRepositoryTest {
@@ -17,6 +20,17 @@ public class CiDaoRepositoryTest {
 
     @Test
     public void testSaveCi() {
-        System.out.println(ciRepository.getCiCollection("1111"));
+        List<CiDao> ciDaoList = new ArrayList<>();
+        CiDao ciDao = new CiDao();
+        ciDao.setEnName("test_ci");
+        ciDaoList.add(ciDao);
+
+        ciRepository.insertAllCi(ciDaoList, "test");
+    }
+
+    @Test
+    public void testFindCi() {
+        CiDao ciDao = ciRepository.findCi("test", "uat");
+        System.out.println(ciDao);
     }
 }
