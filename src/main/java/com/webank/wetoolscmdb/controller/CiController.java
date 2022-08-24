@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -46,13 +45,13 @@ public class CiController {
         // 创建CI
         ciService.createCi(ci);
 
-        if(ci.getFiledList() == null && ci.getIsCmdb()) {
+        if(ci.getFieldList() == null && ci.getIsCmdb()) {
             List<CiField> ciFieldList =  cmdbService.getCmdbCiAllField(ci);
             if(ciFieldList.size() == 0) {
                 log.warn("env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.");
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
             }
-            ci.setFiledList(ciFieldList);
+            ci.setFieldList(ciFieldList);
         }
 
         if(!fieldService.existedFieldMetaCollection(ci)) {

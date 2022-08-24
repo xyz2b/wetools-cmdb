@@ -1,21 +1,32 @@
 package com.webank.wetoolscmdb.service.impl;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.constant.consist.CiFiledType;
 import com.webank.wetoolscmdb.constant.consist.CmdbQueryResponseDataType;
+import com.webank.wetoolscmdb.constant.consist.PowerJobConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
-import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
+import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
+import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
 import com.webank.wetoolscmdb.service.intf.CiService;
 import com.webank.wetoolscmdb.service.intf.CmdbService;
+import com.webank.wetoolscmdb.service.intf.CronService;
 import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
 import com.webank.wetoolscmdb.utils.cocurrent.CallbackTask;
 import com.webank.wetoolscmdb.utils.cocurrent.CallbackTaskScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tech.powerjob.common.enums.ExecuteType;
+import tech.powerjob.common.enums.ProcessorType;
+import tech.powerjob.common.enums.TimeExpressionType;
+import tech.powerjob.common.request.http.SaveJobInfoRequest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +38,10 @@ public class CmdbServiceImpl implements CmdbService {
     CmdbApiUtil cmdbApiUtil;
     @Autowired
     CiService ciService;
+    @Autowired
+    CronService cronService;
+
+    private final static ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public List<CiField> getCmdbCiAllField(Ci ci) {
@@ -59,6 +74,8 @@ public class CmdbServiceImpl implements CmdbService {
                 ciField.setType(CiFiledType.NUMBER);
             } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.HIDDEN)) {
                 ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.DATE)) {
+                ciField.setType(CiFiledType.DATE);
             } else {
                 log.warn("unknown cmdb response data field type, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + cmdbResponseDataHeaderEntry.getKey() + "], type: [" + cmdbResponseDataHeader.getDataType() + "]");
                 continue;
@@ -104,7 +121,7 @@ public class CmdbServiceImpl implements CmdbService {
                 String type = ci.getEnName();
 
                 List<String> resultColumn = new ArrayList<>();
-                for(CiField ciField : ci.getFiledList()) {
+                for(CiField ciField : ci.getFieldList()) {
                     resultColumn.add(ciField.getEnName());
                 }
                 // TODO: sync many column cmdb all data
@@ -121,16 +138,79 @@ public class CmdbServiceImpl implements CmdbService {
             @Override
             public void onSuccess(Integer syncSuccessDataCount) {
                 String type = ci.getEnName();
+                String env = ci.getEnv();
 
                 int totalDataCount = getCmdbDataAllCount(type);
                 if (syncSuccessDataCount < totalDataCount) {
-                    log.warn("sync data from cmdb failed, type " + type + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
+                    log.warn("sync data from cmdb failed, type " + type + ", env " + env + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
                 } else if (syncSuccessDataCount == -1) {
                     log.info("type " + type + " is updating!!!, give up this sync.");
                 } else {
-                    log.info("sync data from cmdb success, type " + type + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
+                    log.info("sync data from cmdb success, type " + type + ", env " + env + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
                     // TODO: 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
+                    Long cronId = ciService.getCiSyncCmdbCronId(type, env);
+                    if (cronId != null) {
+                        SaveJobInfoRequest request = new SaveJobInfoRequest();
+                        request.setJobName(PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + type + "_" + env);
+                        request.setJobDescription(PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + type + "_" + env);
+                        Ci jobParam = new Ci();
+                        jobParam.setEnv(ci.getEnv());
+                        jobParam.setEnName(ci.getEnName());
 
+                        String jobParamJson = null;
+                        try {
+                            jobParamJson = objectMapper.writeValueAsString(ci);
+                        } catch (JsonGenerationException e) {
+                            e.printStackTrace();
+                        } catch (JsonMappingException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (jobParamJson == null) {
+                            log.error("type " + type + ", env " + env + ", cron job is create failed, because job param json dump failed");
+                            return;
+                        } else {
+                            request.setJobParams(jobParamJson);
+                        }
+
+                        request.setTimeExpressionType(TimeExpressionType.FIXED_RATE);
+                        request.setTimeExpression(String.valueOf(ci.getSynCmdbCycle()));
+
+                        request.setExecuteType(ExecuteType.STANDALONE);
+                        request.setProcessorType(ProcessorType.BUILT_IN);
+
+                        request.setMaxInstanceNum(1);
+                        request.setConcurrency(1);
+
+                        request.setInstanceTimeLimit((long) 0);
+                        request.setInstanceRetryNum(0);
+                        request.setTaskRetryNum(1);
+                        request.setMinCpuCores(0);
+                        request.setMinMemorySpace(0);
+                        request.setMinDiskSpace(0);
+                        request.setMaxWorkerCount(0);
+                        request.setEnable(true);
+                        request.setDesignatedWorkers("");
+                        request.setNotifyUserIds(new ArrayList<>(0));
+
+                        request.setProcessorInfo(SyncCmdbDataProcessor.class.getName());
+
+                        Long cronJobId = cronService.createJob(request);
+
+                        if(cronJobId == null) {
+                            log.error("type " + type + ", env " + env + ", cron job is create failed, because power job api return failed");
+                        } else {
+                            if(ciService.updateCiSyncCmdbCronId(type, env, cronId)) {
+                                log.info("type " + type + ", env " + env + ", cron job is create success");
+                            } else {
+                                log.error("type " + type + ", env " + env + ", cron job id write to db failed, but cron job is create success");
+                            }
+                        }
+                    } else {
+                        log.info("type " + type + ", env " + env + ", cron job is already existed");
+                    }
                 }
             }
 
@@ -144,9 +224,25 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
-    public int syncManyColumnCmdbDataByFilter(String type, Map<String, String> filter, List<String> resultColumn) {
+    public int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter) {
+        // 查询该CI所有的Field，拿出是CMDB的字段，组成CI的Field填入CI的fieldList字段，只需要填充field的en_name即可
+        List<String> resultColumn = new ArrayList<>();
+        for(CiField ciField : ci.getFieldList()) {
+            if(ciField.getIsCmdb()) {
+                resultColumn.add(ciField.getEnName());
+            }
+        }
 
-        return 0;
+        String type = ci.getEnName();
+
+        CmdbResponseData cmdbResponseData = cmdbApiUtil.getCiData(type, filter, resultColumn);
+        List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponseData);
+
+
+        // TODO: 根据guid比对cmdb同步过来的数据和当前DB中存储的数据，存在就更新，不存在就新建
+
+
+        return cmdbData.size();
     }
 
     @Override
@@ -155,7 +251,7 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
-    public int getCmdbDataCountByFilter(String type, Map<String, String> filter) {
+    public int getCmdbDataCountByFilter(String type, Map<String, Object> filter) {
         return cmdbApiUtil.getCiDataCount(type, filter);
     }
 }

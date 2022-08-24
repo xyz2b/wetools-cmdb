@@ -1,36 +1,25 @@
 package com.webank.wetoolscmdb.config;
 
-import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import tech.powerjob.client.PowerJobClient;
 import tech.powerjob.common.utils.CommonUtils;
 import tech.powerjob.common.utils.NetUtils;
 import tech.powerjob.worker.PowerJobWorker;
-import tech.powerjob.worker.autoconfigure.PowerJobProperties;
 import tech.powerjob.worker.common.PowerJobWorkerConfig;
 
 import java.util.Arrays;
 import java.util.List;
 
-@Configuration
-public class PowerJobAutoConfiguration {
-
+@Configuration("PowerJobConfig")
+public class PowerJobConfig {
     @Bean
-    @ConditionalOnMissingBean
     public PowerJobWorker initPowerJob(PowerJobProperties properties) {
-
-        PowerJobProperties.Worker worker = properties.getWorker();
-
         /*
          * Address of PowerJob-server node(s). Do not mistake for ActorSystem port. Do not add
          * any prefix, i.e. http://.
          */
-        CommonUtils.requireNonNull(worker.getServerAddress(), "serverAddress can't be empty!");
-        List<String> serverAddress = Arrays.asList(worker.getServerAddress().split(","));
+        List<String> serverAddress = Arrays.asList(properties.getServerAddress().split(","));
 
         /*
          * Create OhMyConfig object for setting properties.
@@ -39,7 +28,7 @@ public class PowerJobAutoConfiguration {
         /*
          * Configuration of worker port. Random port is enabled when port is set with non-positive number.
          */
-        int port = worker.getAkkaPort();
+        int port = properties.getAkkaPort();
         if (port <= 0) {
             port = NetUtils.getRandomPort();
         }
@@ -49,23 +38,23 @@ public class PowerJobAutoConfiguration {
          * error. This property should be the same with what you entered for appName when getting
          * registered.
          */
-        config.setAppName(worker.getAppName());
+        config.setAppName(properties.getAppName());
         config.setServerAddress(serverAddress);
         /*
          * For non-Map/MapReduce tasks, {@code memory} is recommended for speeding up calculation.
          * Map/MapReduce tasks may produce batches of subtasks, which could lead to OutOfMemory
          * exception or error, {@code disk} should be applied.
          */
-        config.setStoreStrategy(worker.getStoreStrategy());
+        config.setStoreStrategy(properties.getStoreStrategy());
         /*
          * When enabledTestMode is set as true, PowerJob-worker no longer connects to PowerJob-server
          * or validate appName.
          */
-        config.setEnableTestMode(worker.isEnableTestMode());
+        config.setEnableTestMode(properties.isEnableTestMode());
         /*
          * Max length of appended workflow context . Appended workflow context value that is longer than the value will be ignore.
          */
-        config.setMaxAppendedWfContextLength(worker.getMaxAppendedWfContextLength());
+        config.setMaxAppendedWfContextLength(properties.getMaxAppendedWfContextLength());
         /*
          * Create OhMyWorker object and set properties.
          */
@@ -74,21 +63,10 @@ public class PowerJobAutoConfiguration {
         return ohMyWorker;
     }
 
-    static class PowerJobWorkerCondition extends AnyNestedCondition {
-
-        public PowerJobWorkerCondition() {
-            super(ConfigurationPhase.PARSE_CONFIGURATION);
-        }
-
-        @Deprecated
-        @ConditionalOnProperty(prefix = "powerjob", name = "server-address")
-        static class PowerJobProperty {
-
-        }
-
-        @ConditionalOnProperty(prefix = "powerjob.worker", name = "server-address")
-        static class PowerJobWorkerProperty {
-
-        }
+    @Bean
+    public PowerJobClient intPowerJobClient(PowerJobProperties properties) {
+        List<String> serverAddress = Arrays.asList(properties.getServerAddress().split(","));
+        // 初始化 client，需要server地址和应用名称作为参数
+        return new PowerJobClient(serverAddress, properties.getAppName(), properties.getPassword());
     }
 }

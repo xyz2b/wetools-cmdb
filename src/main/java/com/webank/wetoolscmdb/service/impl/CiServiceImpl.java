@@ -2,22 +2,26 @@ package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
+import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
+import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import com.webank.wetoolscmdb.service.intf.CiService;
-import com.webank.wetoolscmdb.service.intf.FieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @Slf4j
 public class CiServiceImpl implements CiService {
     @Autowired
-    FieldService fieldService;
+    FieldRepository fieldRepository;
 
     @Autowired
     CiRepository ciRepository;
@@ -71,6 +75,39 @@ public class CiServiceImpl implements CiService {
     @Override
     public boolean isUpdating(Ci ci) {
         return ciRepository.isUpdating(ci.getEnName(), ci.getEnv());
+    }
+
+    @Override
+    public Ci findCi(String ci_name, String env) {
+        CiDao ciDao = ciRepository.findCi(ci_name, env);
+
+        List<FieldDao> fieldDaoList =  fieldRepository.findCiAllField(ci_name, env);
+
+        Ci ci = new Ci();
+        ci.setEnName(ciDao.getEnName());
+        ci.setCiDataLastUpdateDate(ciDao.getCIDataLastUpdateDate());
+
+        List<CiField> ciFieldList = new ArrayList<>(fieldDaoList.size());
+        for(int i = 0; i < fieldDaoList.size(); i++) {
+            CiField ciField = new CiField();
+            ciField.setEnName(fieldDaoList.get(i).getEnName());
+            ciFieldList.add(ciField);
+        }
+
+        ci.setFieldList(ciFieldList);
+
+        return ci;
+    }
+
+    @Override
+    public Long getCiSyncCmdbCronId(String ci_name, String env) {
+        CiDao ciDao = ciRepository.findCi(ci_name, env);
+        return ciDao.getCronId();
+    }
+
+    @Override
+    public boolean updateCiSyncCmdbCronId(String ci_name, String env, Long cronId) {
+        return ciRepository.updateCronId(ci_name, env, cronId);
     }
 
     private void transfer(Ci ci, CiDao ciDao) {

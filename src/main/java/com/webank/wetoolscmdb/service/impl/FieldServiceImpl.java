@@ -4,7 +4,7 @@ import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
-import com.webank.wetoolscmdb.model.entity.mongo.FiledDao;
+import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import com.webank.wetoolscmdb.service.intf.FieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -38,25 +38,25 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public boolean createField(Ci ci) {
         String env = ci.getEnv();
-        List<CiField> fieldList = ci.getFiledList();
+        List<CiField> fieldList = ci.getFieldList();
 
-        List<FiledDao> filedDaoList = new ArrayList<>(fieldList.size());
+        List<FieldDao> fieldDaoList = new ArrayList<>(fieldList.size());
         for(CiField ciField : fieldList) {
             // 将元数据插入元数据集合中
-            FiledDao filedDao = new FiledDao();
-            transfer(ciField, filedDao);
-            filedDao.setIsDelete(false);
+            FieldDao fieldDao = new FieldDao();
+            transfer(ciField, fieldDao);
+            fieldDao.setIsDelete(false);
             Date now = new Date();
-            filedDao.setCreatedDate(now);
-            filedDao.setUpdatedDate(now);
-            filedDao.setCi(ci.getEnName());
+            fieldDao.setCreatedDate(now);
+            fieldDao.setUpdatedDate(now);
+            fieldDao.setCi(ci.getEnName());
 
-            filedDaoList.add(filedDao);
+            fieldDaoList.add(fieldDao);
         }
 
-        List<FiledDao> rst = fieldRepository.insertAllField(filedDaoList, env);
+        List<FieldDao> rst = fieldRepository.insertAllField(fieldDaoList, env);
         if (rst == null) {
-            log.error("insert field failed: " + filedDaoList);
+            log.error("insert field failed: " + fieldDaoList);
             return false;
         }
 
@@ -69,12 +69,12 @@ public class FieldServiceImpl implements FieldService {
         return fieldRepository.fieldCollectionExisted(env);
     }
 
-    private void transfer(CiField ciField, FiledDao filedDao) {
-        filedDao.setCnName(ciField.getCnName());
-        filedDao.setEnName(ciField.getEnName());
-        filedDao.setIsCmdb(ciField.getIsCmdb());
-        filedDao.setIsDisplay(ciField.getIsDisplay());
-        filedDao.setPredictLength(ciField.getPredictLength());
-        filedDao.setType(ciField.getType());
+    private void transfer(CiField ciField, FieldDao fieldDao) {
+        fieldDao.setCnName(ciField.getCnName());
+        fieldDao.setEnName(ciField.getEnName());
+        fieldDao.setIsCmdb(ciField.getIsCmdb());
+        fieldDao.setIsDisplay(ciField.getIsDisplay());
+        fieldDao.setPredictLength(ciField.getPredictLength());
+        fieldDao.setType(ciField.getType());
     }
 }

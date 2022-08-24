@@ -1,9 +1,11 @@
 package com.webank.wetoolscmdb.utils.cmdb;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.config.CmdbApiProperties;
-import com.webank.wetoolscmdb.constant.consist.CmdbApi;
-import com.webank.wetoolscmdb.constant.consist.CmdbQueryApiType;
-import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
+import com.webank.wetoolscmdb.constant.consist.*;
+import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbRequest;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
@@ -14,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +33,70 @@ public class CmdbApiUtil {
 
     private final String CMDB_API_URL = "/cmdb/api/";
 
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+
+    public List<Map<String, Object>> parseCmdbResponseData(CmdbResponseData cmdbResponseData) {
+        Map<String, CmdbResponseDataHeader> fieldAttributes = new HashMap<>(cmdbResponseData.getHeader().size());
+        List<CmdbResponseDataHeader> cmdbResponseDataHeaders = cmdbResponseData.getHeader();
+        for(CmdbResponseDataHeader cmdbResponseDataHeader : cmdbResponseDataHeaders) {
+            fieldAttributes.put(cmdbResponseDataHeader.getEnName(), cmdbResponseDataHeader);
+        }
+
+        List<Map<String, Object>> contents = new ArrayList<>(cmdbResponseData.getContent().size());
+        for(Map<String, Object> fieldData : cmdbResponseData.getContent()) {
+            Map<String, Object> content = new HashMap<>(fieldData.size());
+            for(Map.Entry<String, Object> field : fieldData.entrySet()) {
+                if(fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.REF)) {
+                    List<Map<String, String>> value = (List<Map<String, String>>) field.getValue();
+                    if(value != null) {
+                        content.put(field.getKey(), value.get(0).get("v"));
+                    } else {
+                        content.put(field.getKey(), null);
+                    }
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.MULTI_REF)) {
+                    List<Map<String, String>> value = (List<Map<String, String>>) field.getValue();
+                    if(value != null) {
+                        List<String> list = new ArrayList<>(value.size());
+                        for(Map<String, String> d : value) {
+                            list.add(d.get("v"));
+                        }
+                        content.put(field.getKey(), list);
+                    } else {
+                        content.put(field.getKey(), null);
+                    }
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.SELECT)) {
+                    String value = (String) field.getValue();
+                    content.put(field.getKey(), value);
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.TEXT)) {
+                    String value = (String) field.getValue();
+                    content.put(field.getKey(), value);
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.TEXTAREA)) {
+                    String value = (String) field.getValue();
+                    content.put(field.getKey(), value);
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.NUMBER)) {
+                    Integer value = (Integer) field.getValue();
+                    content.put(field.getKey(), value);
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.HIDDEN)) {
+                    String value = (String) field.getValue();
+                    content.put(field.getKey(), value);
+                } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.DATE)) {
+                    String value = (String) field.getValue();
+                    try {
+                        content.put(field.getKey(), sdf.parse(value));
+                    } catch (ParseException e) {
+                        log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + ", error: [" + e.getMessage() + "]");
+                        e.printStackTrace();
+                    }
+                } else {
+                    log.warn("unknown cmdb response data field type, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]");
+                }
+            }
+            contents.add(content);
+        }
+
+        return contents;
+    }
+
     // 获取某个CI的总数据量
     public int getCiDataCount(String type) {
         CmdbResponse response = standardQueryCmdb(type, 0, 1, true, new HashMap<>(0), new ArrayList<>(0));
@@ -36,7 +104,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI指定过滤条件的数据量
-    public int getCiDataCount(String type, Map<String, String> filter) {
+    public int getCiDataCount(String type, Map<String, Object> filter) {
         CmdbResponse response = standardQueryCmdb(type, 0, 1, true, filter, new ArrayList<>(0));
         return Integer.parseInt(response.getHeaders().getTotalRows());
     }
@@ -83,7 +151,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI指定 过滤条件、返回字段 的所有数据
-    public CmdbResponseData getCiData(String type, Map<String, String> filter, List<String> resultColumn) {
+    public CmdbResponseData getCiData(String type, Map<String, Object> filter, List<String> resultColumn) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
 
         getCiAllPageData(type, firstResponse);
@@ -92,7 +160,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI指定 过滤条件 的所有数据
-    public CmdbResponseData getCiData(String type, Map<String, String> filter) {
+    public CmdbResponseData getCiData(String type, Map<String, Object> filter) {
         CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
 
         getCiAllPageData(type, firstResponse);
@@ -110,7 +178,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
-    public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, String> filter, List<String> resultColumn) {
+    public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn) {
         CmdbResponse response = standardQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
         return response.getData();
     }
@@ -141,7 +209,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个 Template 指定 过滤条件、返回字段 的所有数据
-    public CmdbResponseData getTemplateData(String type, Map<String, String> filter, List<String> resultColumn) {
+    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter, List<String> resultColumn) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
 
         getTemplateAllPageData(type, firstResponse);
@@ -150,7 +218,7 @@ public class CmdbApiUtil {
     }
 
     // 获取某个 Template 指定 过滤条件 的所有数据
-    public CmdbResponseData getTemplateData(String type, Map<String, String> filter) {
+    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter) {
         CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
 
         getTemplateAllPageData(type, firstResponse);
@@ -178,29 +246,27 @@ public class CmdbApiUtil {
     }
 
     // 获取某个Template指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
-    public CmdbResponseData getTemplateData(String type, int startIndex, int pageSize, Map<String, String> filter, List<String> resultColumn) {
+    public CmdbResponseData getTemplateData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn) {
         CmdbResponse response = templateQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
         return response.getData();
     }
 
     // CMDB统一查询接口
-    private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging,
-                                                  Map<String, String> filter, List<String> resultColumn) {
+    private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
         String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.STANDARD_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 
     // CMDB综合查询接口
-    private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging,
-                                                  Map<String, String> filter, List<String> resultColumn) {
+    private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
         String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.TEMPLATE_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 
     // 查询CMDB数据的基础方法
     private CmdbResponse queryCmdb(String url, String type, int startIndex, int pageSize, boolean isPaging,
-                                 Map<String, String> filter, List<String> resultColumn) {
-        CmdbRequest request = new CmdbRequest(props.getAuthUser(), type, startIndex, pageSize, CmdbApi.ACTION_SELECT, isPaging, filter, resultColumn);
+                                 Map<String, Object> filter, List<String> resultColumn) {
+        CmdbRequest request = new CmdbRequest(props.getAuthUser(), type, startIndex, pageSize, CmdbApiQueryCondition.ACTION_SELECT, isPaging, filter, resultColumn);
 
         CmdbResponse response = rest.postForObject(url, request, CmdbResponse.class);
 

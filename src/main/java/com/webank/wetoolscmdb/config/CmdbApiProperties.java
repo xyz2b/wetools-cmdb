@@ -25,5 +25,5 @@ public class CmdbApiProperties {
     @NotEmpty
     private String authUser;
     @Min(1)
-    private int pageSize;
+    private int pageSize = 500;
 }

@@ -1,10 +1,11 @@
 package com.webank.wetoolscmdb.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -25,5 +26,8 @@ public class Ci {
     @JsonProperty("syn_cmdb_cycle")
     private int synCmdbCycle;
     @JsonProperty("filed_list")
-    private List<CiField> filedList;
+    private List<CiField> fieldList;
+    @JsonProperty("ci_data_last_update_date")
+    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
+    private Date ciDataLastUpdateDate;
 }

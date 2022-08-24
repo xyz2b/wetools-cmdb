@@ -17,7 +17,7 @@ import javax.validation.constraints.NotEmpty;
 @ToString
 @Configuration
 @ConfigurationProperties(prefix = "mongodb")
-@PropertySource(value = {"classpath:mongodb.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "config/mongodb.yml", factory = YmlPropertyResourceFactory.class)
+@PropertySource(value = {"classpath:mongodb.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "mongodb.yml", factory = YmlPropertyResourceFactory.class)
 @Validated
 public class MongoProperties {
     /**
@@ -37,21 +37,21 @@ public class MongoProperties {
     @NotEmpty
     private String clientName; // 客户端的标识，用于定位请求来源等，一般用程序名
     @Min(value = 1)
-    private int connectionTimeoutMs; // TCP（socket）连接超时时间，毫秒
+    private int connectionTimeoutMs = 5000; // TCP（socket）连接超时时间，毫秒
     @Min(value = 1)
-    private int maxConnectionIdleTimeMs; // TCP（socket）连接闲置时间，毫秒
+    private int maxConnectionIdleTimeMs = 60000; // TCP（socket）连接闲置时间，毫秒
     @Min(value = 1)
-    private int maxConnectionLifeTimeMs; // TCP（socket）连接最多可以使用多久，毫秒
+    private int maxConnectionLifeTimeMs = 300000; // TCP（socket）连接最多可以使用多久，毫秒
     @Min(value = 1)
-    private int readTimeoutMs; // TCP（socket）读取超时时间，毫秒
+    private int readTimeoutMs = 15000; // TCP（socket）读取超时时间，毫秒
     @Min(value = 1)
-    private int maxWaitTimeMs; // 当连接池无可用连接时客户端阻塞等待的最大时长，毫秒
+    private int maxWaitTimeMs = 5000; // 当连接池无可用连接时客户端阻塞等待的最大时长，毫秒
     @Min(value = 2000)
-    private int heartbeatFrequencyMs; // 心跳检测发送频率，毫秒
+    private int heartbeatFrequencyMs = 20000; // 心跳检测发送频率，毫秒
     @Min(value = 300)
-    private int minHeartbeatFrequencyMs; // 最小的心跳检测发送频率，毫秒
+    private int minHeartbeatFrequencyMs = 8000; // 最小的心跳检测发送频率，毫秒
     @Min(value = 1)
-    private int connectionsMaxSize; // 线程池允许的最大连接数
+    private int connectionsMaxSize = 100; // 线程池允许的最大连接数
     @Min(value = 1)
-    private int connectionsMinSize; // 线程池空闲时保持的最小连接数
+    private int connectionsMinSize = 20; // 线程池空闲时保持的最小连接数
 }

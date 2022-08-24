@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -74,4 +75,24 @@ public class CiRepositoryImpl implements CiRepository {
         assert ciDao != null;
         return ciDao.getIsUpdating();
     }
+
+    @Override
+    public boolean updateCronId(String ciName, String env, Long cronId) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where("en_name").is(ciName);
+        query.addCriteria(criteria);
+
+        Update update = new Update();
+        update.set("cron_id", cronId);
+
+        CiDao ciDao = mongoTemplate.findAndModify(query, update, CiDao.class, collectionName);
+        if (ciDao == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+
 }

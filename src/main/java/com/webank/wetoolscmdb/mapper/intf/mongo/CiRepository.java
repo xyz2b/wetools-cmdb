@@ -16,4 +16,6 @@ public interface CiRepository {
     CiDao findCi(String ciName, String env);
 
     Boolean isUpdating(String ciName, String env);
+
+    boolean updateCronId(String ciName, String env, Long cronId);
 }

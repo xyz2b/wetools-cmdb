@@ -45,4 +45,6 @@ public class CiDao implements Serializable {
     private String updatedBy;
     @Field("created_by")
     private String createdBy;
+    @Field("cron_id")
+    private Long cronId;
 }

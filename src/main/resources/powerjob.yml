@@ -1,0 +1,10 @@
+########### PowerJob-worker properties. ###########
+powerjob:
+  worker:
+    akka-port: 27777    # Akka port, default is 27777
+    app-name: powerjob-agent-test # Application name, used for grouping applications. Recommend to set the same value as project name.
+    server-address: 127.0.0.1:7700 # Address of PowerJob-server node(s). Ip:port or domain. Multiple addresses should be separated with comma.
+    store-strategy: disk # Store strategy of H2 database. disk or memory. Default value is disk.
+    max-result-length: 4096  # Max length of result. Results that are longer than the value will be truncated.
+    max-appended-wf-context-length: 4096    # Max length of appended workflow context . Appended workflow context value that is longer than the value will be ignore.
+    password: 12345678 # 通过OpenApi调用powerjob server的密码，注册app时的密码

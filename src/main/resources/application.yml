@@ -3,6 +3,9 @@ spring:
     name: wetools-cmdb
   profiles:
     active: dev
+  jpa:
+    open-in-view: false
+
 logging:
   level:
     root: debug

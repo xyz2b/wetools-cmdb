@@ -18,6 +18,6 @@ public class CmdbRequest {
     private int pageSize;
     private String action;
     private boolean isPaging;
-    private Map<String, String> filter;
+    private Map<String, Object> filter;
     private List<String> resultColumn;
 }

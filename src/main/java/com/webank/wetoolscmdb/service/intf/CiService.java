@@ -11,4 +11,8 @@ public interface CiService {
     boolean existedCiMetaCollection(Ci ci);
     boolean existedCi(Ci ci);
     boolean isUpdating(Ci ci);
+    Ci findCi(String ci_name, String env);
+    Long getCiSyncCmdbCronId(String ci_name, String env);
+
+    boolean updateCiSyncCmdbCronId(String ci_name, String env, Long cronId);
 }

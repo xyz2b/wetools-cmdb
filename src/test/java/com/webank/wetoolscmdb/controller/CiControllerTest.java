@@ -28,7 +28,7 @@ public class CiControllerTest {
 
     @Test
     public void createCi() throws Exception {
-        Ci ci = new Ci("主机", "wb_host", true, "uat", 30000,  null);
+        Ci ci = new Ci("主机", "wb_host", true, "uat", 30000,  null, null);
         String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ci);
         // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
         mockMvc.perform(MockMvcRequestBuilders
