@@ -1,4 +1,4 @@
-package com.webank.wetoolscmdb.mapper.impl;
+package com.webank.wetoolscmdb.mapper.impl.mongo;
 
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
@@ -32,5 +33,10 @@ public class CiDaoRepositoryTest {
     public void testFindCi() {
         CiDao ciDao = ciRepository.findCi("test", "uat");
         System.out.println(ciDao);
+    }
+
+    @Test
+    public void testUpdate() {
+
     }
 }

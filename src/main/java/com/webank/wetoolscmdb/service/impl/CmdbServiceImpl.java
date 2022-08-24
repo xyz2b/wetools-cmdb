@@ -10,8 +10,10 @@ import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
+import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
+import com.webank.wetoolscmdb.service.intf.CiDataService;
 import com.webank.wetoolscmdb.service.intf.CiService;
 import com.webank.wetoolscmdb.service.intf.CmdbService;
 import com.webank.wetoolscmdb.service.intf.CronService;
@@ -28,6 +30,7 @@ import tech.powerjob.common.request.http.SaveJobInfoRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +43,8 @@ public class CmdbServiceImpl implements CmdbService {
     CiService ciService;
     @Autowired
     CronService cronService;
+    @Autowired
+    CiDataService ciDataService;
 
     private final static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -87,17 +92,37 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
-    public void syncCmdbAllDataAsync(String type) {
+    public void syncCmdbAllDataAsync(Ci ci) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
 
             @Override
             public Integer execute() throws Exception {
-                // TODO: sync cmdb all data
-                return 0;
+                String type = ci.getEnName();
+
+                // sync cmdb all data
+                // 只有CI不是updating状态才可以去更新同步
+                if(ciService.isUpdating(ci)) {
+                    return -1;
+                }
+
+                // 从CMDB同步数据
+                int successInsertSum = 0;
+                int startIndex = 0;
+                CmdbResponse cmdbResponse= cmdbApiUtil.getCiDataByStartIndex(type, startIndex);
+                List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+                successInsertSum += ciDataService.insertCiData(ci, cmdbData);
+
+                while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
+                    cmdbResponse= cmdbApiUtil.getCiDataByStartIndex(type, cmdbApiUtil.nextIndex(cmdbResponse));
+                    successInsertSum += ciDataService.insertCiData(ci, cmdbData);
+                }
+
+                return successInsertSum;
             }
 
             @Override
             public void onSuccess(Integer syncSuccessDataCount) {
+                String type = ci.getEnName();
                 int totalDataCount = getCmdbDataAllCount(type);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type " + type + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
@@ -108,6 +133,7 @@ public class CmdbServiceImpl implements CmdbService {
 
             @Override
             public void onFailure(Throwable t) {
+                String type = ci.getEnName();
                 log.error("sync data from cmdb job error, type " + type + ", message " + t.getMessage());
             }
         });
@@ -124,15 +150,25 @@ public class CmdbServiceImpl implements CmdbService {
                 for(CiField ciField : ci.getFieldList()) {
                     resultColumn.add(ciField.getEnName());
                 }
-                // TODO: sync many column cmdb all data
-                // 只有CI不是updating状态也可以去更新同步
+                // TODO: TEST sync many column cmdb all data
+                // 只有CI不是updating状态才可以去更新同步
                 if(ciService.isUpdating(ci)) {
                     return -1;
                 }
 
                 // 从CMDB同步数据
+                int successInsertSum = 0;
+                int startIndex = 0;
+                CmdbResponse cmdbResponse= cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex);
+                List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+                successInsertSum += ciDataService.insertCiData(ci, cmdbData);
 
-                return 0;
+                while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
+                    cmdbResponse= cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                    successInsertSum += ciDataService.insertCiData(ci, cmdbData);
+                }
+
+                return successInsertSum;
             }
 
             @Override
@@ -141,13 +177,16 @@ public class CmdbServiceImpl implements CmdbService {
                 String env = ci.getEnv();
 
                 int totalDataCount = getCmdbDataAllCount(type);
+                if (syncSuccessDataCount == -1) {
+                    log.info("type " + type + " is updating!!!, give up this sync.");
+                    return;
+                }
+
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type " + type + ", env " + env + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
-                } else if (syncSuccessDataCount == -1) {
-                    log.info("type " + type + " is updating!!!, give up this sync.");
                 } else {
                     log.info("sync data from cmdb success, type " + type + ", env " + env + ", sync success " + syncSuccessDataCount + ", total " + totalDataCount);
-                    // TODO: 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
+                    // TODO: TEST 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
                     Long cronId = ciService.getCiSyncCmdbCronId(type, env);
                     if (cronId != null) {
                         SaveJobInfoRequest request = new SaveJobInfoRequest();

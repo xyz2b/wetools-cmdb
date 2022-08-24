@@ -177,6 +177,15 @@ public class CmdbApiUtil {
         return firstResponse.getData();
     }
 
+    // 获取某个CI指定 返回字段 的startIndex开始的page条数据
+    public CmdbResponse getCiDataByStartIndex(String type, List<String> resultColumn, int startIndex) {
+        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), resultColumn);
+    }
+
+    public CmdbResponse getCiDataByStartIndex(String type, int startIndex) {
+        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+    }
+
     // 获取某个CI指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
     public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn) {
         CmdbResponse response = standardQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
@@ -193,10 +202,14 @@ public class CmdbApiUtil {
     }
 
     // 判断是不是最后一页数据
-    private boolean isLastPage(CmdbResponse response) {
+    public boolean isLastPage(CmdbResponse response) {
         // 本次获取的startIndex加上本次获取的分页大小，就是下一次要获取的startIndex，如果下一次startIndex已经超出了总数据量，就说明获取了全部的数据了
         int nextStartIndex = Integer.parseInt(response.getHeaders().getStartIndex()) + response.getHeaders().getContentRows();
         return nextStartIndex >= Integer.parseInt(response.getHeaders().getTotalRows());
+    }
+
+    public int nextIndex(CmdbResponse response) {
+        return Integer.parseInt(response.getHeaders().getStartIndex()) + response.getHeaders().getContentRows();
     }
 
     // 获取某个 Template 的所有数据

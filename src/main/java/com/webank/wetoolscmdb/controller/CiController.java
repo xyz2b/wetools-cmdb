@@ -4,6 +4,7 @@ import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.Response;
+import com.webank.wetoolscmdb.service.intf.CiDataService;
 import com.webank.wetoolscmdb.service.intf.CiService;
 import com.webank.wetoolscmdb.service.intf.CmdbService;
 import com.webank.wetoolscmdb.service.intf.FieldService;
@@ -28,6 +29,9 @@ public class CiController {
 
     @Autowired
     FieldService fieldService;
+
+    @Autowired
+    CiDataService ciDataService;
 
     @PostMapping(path = "/create", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
@@ -60,10 +64,15 @@ public class CiController {
 
         fieldService.createField(ci);
 
+        if(!ciDataService.existedCiDataCollection(ci)) {
+            ciDataService.createCiDataCollection(ci);
+        }
+
         if(ci.getIsCmdb()) {
             // 异步任务，分批全量同步CMDB数据
             cmdbService.syncManyColumnCmdbAllDataAsync(ci);
         }
+
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
     }

@@ -10,7 +10,7 @@ public interface CmdbService {
     List<CiField> getCmdbCiAllField(Ci ci);
 
     // 返回同步成功的记录数
-    void syncCmdbAllDataAsync(String type);
+    void syncCmdbAllDataAsync(Ci ci);
     void syncManyColumnCmdbAllDataAsync(Ci ci);
 
     int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter);
