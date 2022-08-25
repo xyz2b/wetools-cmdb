@@ -94,7 +94,6 @@ public class CmdbServiceImpl implements CmdbService {
     @Override
     public void syncCmdbAllDataAsync(Ci ci) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
-
             @Override
             public Integer execute() throws Exception {
                 String type = ci.getEnName();
@@ -149,6 +148,7 @@ public class CmdbServiceImpl implements CmdbService {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
                 log.error("sync data from cmdb job error, type " + type + ", env " + env + ", message " + t.getMessage());
+                t.printStackTrace();
             }
         });
     }

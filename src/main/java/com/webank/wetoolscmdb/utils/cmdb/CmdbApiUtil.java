@@ -1,11 +1,7 @@
 package com.webank.wetoolscmdb.utils.cmdb;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.config.CmdbApiProperties;
 import com.webank.wetoolscmdb.constant.consist.*;
-import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbRequest;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
@@ -33,7 +29,10 @@ public class CmdbApiUtil {
 
     private final String CMDB_API_URL = "/cmdb/api/";
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
+
 
     public List<Map<String, Object>> parseCmdbResponseData(CmdbResponseData cmdbResponseData) {
         Map<String, CmdbResponseDataHeader> fieldAttributes = new HashMap<>(cmdbResponseData.getHeader().size());
@@ -81,11 +80,23 @@ public class CmdbApiUtil {
                     content.put(field.getKey(), value);
                 } else if (fieldAttributes.get(field.getKey()).getDataType().equals(CmdbQueryResponseDataType.DATE)) {
                     String value = (String) field.getValue();
-                    try {
-                        content.put(field.getKey(), sdf.parse(value));
-                    } catch (ParseException e) {
-                        log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + ", error: [" + e.getMessage() + "]");
-                        e.printStackTrace();
+                    if(value == null) {
+                        content.put(field.getKey(), null);
+                    } else {
+                        try {
+                            if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_DAY.length()) {
+                                content.put(field.getKey(), SIMPLE_DATE_FORMAT_DAY.parse(value));
+                            } else if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_SECOND.length()) {
+                                content.put(field.getKey(), SIMPLE_DATE_FORMAT_SECOND.parse(value));
+                            } else if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_MILLISECOND.length()) {
+                                content.put(field.getKey(), SIMPLE_DATE_FORMAT_MILLISECOND.parse(value));
+                            } else {
+                                log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + "msg: [unknown date format], value: [" + value+"]");
+                            }
+                        } catch (ParseException e) {
+                            log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + ", error: [" + e.getMessage() + "]");
+                            e.printStackTrace();
+                        }
                     }
                 } else {
                     log.warn("unknown cmdb response data field type, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]");
@@ -272,20 +283,20 @@ public class CmdbApiUtil {
 
     // CMDB统一查询接口
     private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.STANDARD_QUERY + ".json";
+        String url = props.getUrl() + CMDB_API_URL + CmdbApiConsist.STANDARD_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 
     // CMDB综合查询接口
     private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbQueryApiType.TEMPLATE_QUERY + ".json";
+        String url = props.getUrl() + CMDB_API_URL + CmdbApiConsist.TEMPLATE_QUERY + ".json";
         return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
     }
 
     // 查询CMDB数据的基础方法
     private CmdbResponse queryCmdb(String url, String type, int startIndex, int pageSize, boolean isPaging,
                                  Map<String, Object> filter, List<String> resultColumn) {
-        CmdbRequest request = new CmdbRequest(props.getAuthUser(), type, startIndex, pageSize, CmdbApiQueryCondition.ACTION_SELECT, isPaging, filter, resultColumn);
+        CmdbRequest request = new CmdbRequest(props.getAuthUser(), type, startIndex, pageSize, CmdbApiConsist.ACTION_SELECT, isPaging, filter, resultColumn);
 
         CmdbResponse response = rest.postForObject(url, request, CmdbResponse.class);
 

@@ -1,7 +1,7 @@
 package com.webank.wetoolscmdb.cron;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webank.wetoolscmdb.constant.consist.CmdbApiQueryCondition;
+import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbQueryDateFilter;
 import com.webank.wetoolscmdb.service.intf.CiService;
@@ -51,9 +51,9 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
 
         CmdbQueryDateFilter cmdbQueryDateFilter = new CmdbQueryDateFilter();
         Map<String, String> query = new HashMap<>();
-        query.put(CmdbApiQueryCondition.QUERY_FILTER_GREATER_THAN, sdf.format(ci.getCiDataLastUpdateDate()));
+        query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, sdf.format(ci.getCiDataLastUpdateDate()));
         cmdbQueryDateFilter.setRange(query);
-        filter.put("updated_date", cmdbQueryDateFilter);
+        filter.put(CmdbApiConsist.QUERY_FILTER_UPDATED_DATE, cmdbQueryDateFilter);
 
         int syncSuccessCount = cmdbService.syncManyColumnCmdbDataByFilter(ci, filter);
 
