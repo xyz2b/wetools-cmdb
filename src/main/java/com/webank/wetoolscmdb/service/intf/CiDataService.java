@@ -10,4 +10,6 @@ public interface CiDataService {
     boolean createCiDataCollection(Ci ci);
 
     int insertCiData(Ci ci, List<Map<String, Object>> data);
+
+    int updateCiData(Ci ci, List<Map<String, Object>> data);
 }

@@ -75,7 +75,7 @@ public class CiRepositoryImpl implements CiRepository {
         query.addCriteria(criteria);
         CiDao ciDao = mongoTemplate.findOne(query, CiDao.class, collectionName);
         if (ciDao == null) {
-            log.error("ci " + ciName + " env " + env + "is not existed!!!");
+            log.error("ci " + ciName + " env " + env + " is not existed!!!");
             return null;
         }
         return ciDao.getIsUpdating();

@@ -39,5 +39,7 @@ public class CiControllerTest {
                 )
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(print());
+
+        Thread.sleep(200000000);
     }
 }

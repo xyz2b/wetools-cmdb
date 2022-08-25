@@ -84,14 +84,14 @@ public class CmdbApiUtil {
                         content.put(field.getKey(), null);
                     } else {
                         try {
-                            if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_DAY.length()) {
+                            if (value.length() == CmdbApiConsist.DATE_FORMAT_DAY.length()) {
                                 content.put(field.getKey(), SIMPLE_DATE_FORMAT_DAY.parse(value));
-                            } else if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_SECOND.length()) {
+                            } else if (value.length() == CmdbApiConsist.DATE_FORMAT_SECOND.length()) {
                                 content.put(field.getKey(), SIMPLE_DATE_FORMAT_SECOND.parse(value));
-                            } else if (field.getKey().length() == CmdbApiConsist.DATE_FORMAT_MILLISECOND.length()) {
+                            } else if (value.length() == CmdbApiConsist.DATE_FORMAT_MILLISECOND.length()) {
                                 content.put(field.getKey(), SIMPLE_DATE_FORMAT_MILLISECOND.parse(value));
                             } else {
-                                log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + "msg: [unknown date format], value: [" + value+"]");
+                                log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + ", msg: [unknown date format], value: [" + value+"]");
                             }
                         } catch (ParseException e) {
                             log.warn("parse cmdb response data field date type failed, code: [" + WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR + "], field_name: " + field.getKey() + "], type: [" + fieldAttributes.get(field.getKey()).getDataType() + "]" + ", error: [" + e.getMessage() + "]");

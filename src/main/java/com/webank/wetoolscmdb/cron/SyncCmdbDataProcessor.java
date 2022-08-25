@@ -28,8 +28,9 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
 
     private final static ObjectMapper objectMapper = new ObjectMapper();
 
-    private final static SimpleDateFormat sdf = new SimpleDateFormat(" yyyy-MM-dd HH:mm:ss:SSS");
-
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
         OmsLogger omsLogger = context.getOmsLogger();
@@ -51,7 +52,7 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
 
         CmdbQueryDateFilter cmdbQueryDateFilter = new CmdbQueryDateFilter();
         Map<String, String> query = new HashMap<>();
-        query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, sdf.format(ci.getCiDataLastUpdateDate()));
+        query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, SIMPLE_DATE_FORMAT_MILLISECOND.format(ci.getCiDataLastUpdateDate()));
         cmdbQueryDateFilter.setRange(query);
         filter.put(CmdbApiConsist.QUERY_FILTER_UPDATED_DATE, cmdbQueryDateFilter);
 

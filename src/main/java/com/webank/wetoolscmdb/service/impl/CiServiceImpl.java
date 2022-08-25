@@ -39,6 +39,7 @@ public class CiServiceImpl implements CiService {
         ciDao.setCreatedDate(now);
         ciDao.setUpdatedDate(now);
         ciDao.setCIDataLastUpdateDate(now);
+        ciDao.setCronId(-1L);
 
         CiDao rst = ciRepository.insertOneCi(ciDao, env);
         if (rst == null) {
@@ -91,11 +92,12 @@ public class CiServiceImpl implements CiService {
         for(int i = 0; i < fieldDaoList.size(); i++) {
             CiField ciField = new CiField();
             ciField.setEnName(fieldDaoList.get(i).getEnName());
+            ciField.setIsCmdb(fieldDaoList.get(i).getIsCmdb());
             ciFieldList.add(ciField);
         }
 
         ci.setFieldList(ciFieldList);
-
+        ci.setEnv(env);
         return ci;
     }
 

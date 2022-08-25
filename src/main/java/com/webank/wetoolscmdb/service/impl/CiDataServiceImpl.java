@@ -43,4 +43,11 @@ public class CiDataServiceImpl implements CiDataService {
         List<Map<String, Object>> rst = ciDataRepository.insertAll(ci.getEnName(), ci.getEnv(), data);
         return rst.size();
     }
+
+    @Override
+    public int updateCiData(Ci ci, List<Map<String, Object>> data) {
+        // TODO: 根据guid比对cmdb同步过来的数据和当前DB中存储的数据，存在就更新，不存在就新建
+
+        return 0;
+    }
 }
