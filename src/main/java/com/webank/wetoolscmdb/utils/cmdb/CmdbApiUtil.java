@@ -182,8 +182,14 @@ public class CmdbApiUtil {
         return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), resultColumn);
     }
 
+    // 获取某个CI的startIndex开始的page条数据
     public CmdbResponse getCiDataByStartIndex(String type, int startIndex) {
         return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+    }
+
+    // 获取某个CI指定 过滤条件 返回字段 的startIndex开始的page条数据
+    public CmdbResponse getCiDataByStartIndex(String type, Map<String, Object> filter, List<String> resultColumn, int startIndex) {
+        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, filter, new ArrayList<>(0));
     }
 
     // 获取某个CI指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据

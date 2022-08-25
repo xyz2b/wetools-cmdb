@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.constant.consist.CiCollectionNamePrefix;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@Slf4j
 public class CiRepositoryImpl implements CiRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -72,7 +74,10 @@ public class CiRepositoryImpl implements CiRepository {
         Criteria criteria = Criteria.where("en_name").is(ciName);
         query.addCriteria(criteria);
         CiDao ciDao = mongoTemplate.findOne(query, CiDao.class, collectionName);
-        assert ciDao != null;
+        if (ciDao == null) {
+            log.error("ci " + ciName + " env " + env + "is not existed!!!");
+            return null;
+        }
         return ciDao.getIsUpdating();
     }
 

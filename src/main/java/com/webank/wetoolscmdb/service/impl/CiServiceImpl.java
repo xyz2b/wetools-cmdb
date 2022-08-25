@@ -73,7 +73,7 @@ public class CiServiceImpl implements CiService {
     }
 
     @Override
-    public boolean isUpdating(Ci ci) {
+    public Boolean isUpdating(Ci ci) {
         return ciRepository.isUpdating(ci.getEnName(), ci.getEnv());
     }
 

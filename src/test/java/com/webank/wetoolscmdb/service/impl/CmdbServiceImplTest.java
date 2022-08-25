@@ -35,4 +35,13 @@ public class CmdbServiceImplTest {
         ciField.setEnName("host_lanip");
         ciFieldList.add(ciField);
     }
+
+    @Test
+    public void testSyncCmdbAllDataAsync() throws InterruptedException {
+        Ci ci = new Ci();
+        ci.setEnName("wb_host");
+        cmdbService.syncCmdbAllDataAsync(ci);
+
+        Thread.sleep(200000000);
+    }
 }
