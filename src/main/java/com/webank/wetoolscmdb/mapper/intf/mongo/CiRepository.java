@@ -18,4 +18,8 @@ public interface CiRepository {
     Boolean isUpdating(String ciName, String env);
 
     boolean updateCronId(String ciName, String env, Long cronId);
+
+    boolean updateLastUpdateTime(String ciName, String env, String lastUpdateTime);
+    String getLastUpdateTime(String ciName, String env, String lastUpdateTime);
+
 }

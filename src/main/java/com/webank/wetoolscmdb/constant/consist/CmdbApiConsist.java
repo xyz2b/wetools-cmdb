@@ -7,8 +7,9 @@ public class CmdbApiConsist {
     public static final String ACTION_SELECT = "select";
 
     public static final String QUERY_FILTER_UPDATED_DATE = "updated_date";
-    public static final  String QUERY_FILTER_CREATED_DATE = "created_date";
-    public static final  String QUERY_FILTER_GUID = "guid";
+    public static final String QUERY_FILTER_CREATED_DATE = "created_date";
+    public static final String QUERY_FILTER_GUID = "guid";
+
 
     public static final String QUERY_FILTER_GREATER_THAN = ">";
     public static final String QUERY_FILTER_GREATER_THAN_OR_EQUAL = ">=";

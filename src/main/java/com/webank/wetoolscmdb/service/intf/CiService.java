@@ -1,12 +1,9 @@
 package com.webank.wetoolscmdb.service.intf;
 
 import com.webank.wetoolscmdb.model.dto.Ci;
-import com.webank.wetoolscmdb.model.dto.CiField;
-
-import java.util.List;
 
 public interface CiService {
-    boolean createCi(Ci ci);
+    Ci insertOneCi(Ci ci);
     boolean createCiMetaCollection(Ci ci);
     boolean existedCiMetaCollection(Ci ci);
     boolean existedCi(Ci ci);
@@ -15,4 +12,7 @@ public interface CiService {
     Long getCiSyncCmdbCronId(String ci_name, String env);
 
     boolean updateCiSyncCmdbCronId(String ci_name, String env, Long cronId);
+
+    boolean updateLastUpdateTime(String ciName, String env, String lastUpdateTime);
+    String getLastUpdateTime(String ciName, String env, String lastUpdateTime);
 }

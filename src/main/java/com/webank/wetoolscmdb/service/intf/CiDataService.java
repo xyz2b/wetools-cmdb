@@ -12,4 +12,8 @@ public interface CiDataService {
     int insertCiData(Ci ci, List<Map<String, Object>> data);
 
     int updateCiData(Ci ci, List<Map<String, Object>> data);
+
+    String getLastUpdateTime(String ciName, String env);
+
+    long updateAll(String ciName, String env, Map<String, Object> data);
 }

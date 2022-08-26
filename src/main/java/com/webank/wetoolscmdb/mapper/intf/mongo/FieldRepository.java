@@ -13,4 +13,6 @@ public interface FieldRepository {
     FieldDao insertOneField(FieldDao fieldDao, String env);
     List<FieldDao> insertAllField(List<FieldDao> ciFiledListDao, String env);
     List<FieldDao> findCiAllField(String ci_name, String env);
+    List<String> findCiAllFieldName(String ci_name, String env);
+    List<String> findCiAllCmdbFieldName(String ci_name, String env);
 }

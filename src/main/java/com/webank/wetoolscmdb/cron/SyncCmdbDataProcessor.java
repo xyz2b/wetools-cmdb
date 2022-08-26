@@ -52,7 +52,7 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
 
         CmdbQueryDateFilter cmdbQueryDateFilter = new CmdbQueryDateFilter();
         Map<String, String> query = new HashMap<>();
-        query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, SIMPLE_DATE_FORMAT_MILLISECOND.format(ci.getCiDataLastUpdateDate()));
+        query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, ci.getCiDataLastUpdateDate());
         cmdbQueryDateFilter.setRange(query);
         filter.put(CmdbApiConsist.QUERY_FILTER_UPDATED_DATE, cmdbQueryDateFilter);
 

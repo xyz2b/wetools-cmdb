@@ -29,18 +29,15 @@ public class CiDao implements Serializable {
     @Field("is_cmdb")
     private Boolean isCmdb;
     @Field("ci_data_last_update_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
-    private Date cIDataLastUpdateDate;
+    private String cIDataLastUpdateDate;
     @Field("syn_cmdb_cycle")
     private int synCmdbCycle;
     @Field("is_updating")
     private Boolean isUpdating;
     @Field("created_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
-    private Date createdDate;
+    private String createdDate;
     @Field("updated_date")
-    @JsonFormat( pattern ="yyyy-MM-dd HH:mm:ss", timezone ="GMT+8")
-    private Date updatedDate;
+    private String updatedDate;
     @Field("updated_by")
     private String updatedBy;
     @Field("created_by")

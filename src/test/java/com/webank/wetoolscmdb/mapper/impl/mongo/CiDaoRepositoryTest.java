@@ -36,7 +36,9 @@ public class CiDaoRepositoryTest {
     }
 
     @Test
-    public void testUpdate() {
-
+    public void testUpdateLastUpdateTime() {
+        ciRepository.updateLastUpdateTime("wb_host", "uat", "2022-08-25 15:59:32:281");
     }
+
+
 }

@@ -37,11 +37,9 @@ public class FieldDao implements Serializable {
     @Field("ci")
     private String ci;
     @Field("created_date")
-    @CreatedDate
-    private Date createdDate;
+    private String createdDate;
     @Field("updated_date")
-    @LastModifiedDate
-    private Date updatedDate;
+    private String updatedDate;
     @Field("updated_by")
     private String updatedBy;
     @Field("created_by")

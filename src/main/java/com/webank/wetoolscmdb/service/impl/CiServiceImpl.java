@@ -1,6 +1,7 @@
 package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
+import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
@@ -8,11 +9,13 @@ import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import com.webank.wetoolscmdb.service.intf.CiService;
+import com.webank.wetoolscmdb.utils.TransferUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,28 +29,36 @@ public class CiServiceImpl implements CiService {
     @Autowired
     CiRepository ciRepository;
 
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
+
     @Override
-    public boolean createCi(Ci ci) {
+    public Ci insertOneCi(Ci ci) {
         String env = ci.getEnv();
 
         // 将元数据插入元数据集合中
         CiDao ciDao = new CiDao();
-        transfer(ci, ciDao);
+        TransferUtil.transferCiToCiDao(ci, ciDao);
         ciDao.setIsDelete(false);
         Date now = new Date();
         ciDao.setIsUpdating(false);
-        ciDao.setCreatedDate(now);
-        ciDao.setUpdatedDate(now);
-        ciDao.setCIDataLastUpdateDate(now);
+        ciDao.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
+        ciDao.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
+        ciDao.setCIDataLastUpdateDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
         ciDao.setCronId(-1L);
 
-        CiDao rst = ciRepository.insertOneCi(ciDao, env);
-        if (rst == null) {
+        CiDao data = ciRepository.insertOneCi(ciDao, env);
+        if (data == null) {
             log.error("insert ci failed: " + ciDao);
-            return false;
+            return null;
         }
 
-        return true;
+        Ci rst = new Ci();
+        TransferUtil.transferCiDaoToCi(data, rst);
+        rst.setEnv(env);
+
+        return rst;
     }
 
     @Override
@@ -82,22 +93,21 @@ public class CiServiceImpl implements CiService {
     public Ci findCi(String ci_name, String env) {
         CiDao ciDao = ciRepository.findCi(ci_name, env);
 
-        List<FieldDao> fieldDaoList =  fieldRepository.findCiAllField(ci_name, env);
+        List<FieldDao> fieldDaoList = fieldRepository.findCiAllField(ci_name, env);
 
         Ci ci = new Ci();
-        ci.setEnName(ciDao.getEnName());
-        ci.setCiDataLastUpdateDate(ciDao.getCIDataLastUpdateDate());
+        TransferUtil.transferCiDaoToCi(ciDao, ci);
+        ci.setEnv(env);
 
         List<CiField> ciFieldList = new ArrayList<>(fieldDaoList.size());
-        for(int i = 0; i < fieldDaoList.size(); i++) {
+        for(FieldDao fieldDao : fieldDaoList) {
             CiField ciField = new CiField();
-            ciField.setEnName(fieldDaoList.get(i).getEnName());
-            ciField.setIsCmdb(fieldDaoList.get(i).getIsCmdb());
+            TransferUtil.transferFieldDaoToCiField(fieldDao, ciField);
             ciFieldList.add(ciField);
         }
 
         ci.setFieldList(ciFieldList);
-        ci.setEnv(env);
+
         return ci;
     }
 
@@ -112,13 +122,16 @@ public class CiServiceImpl implements CiService {
         return ciRepository.updateCronId(ci_name, env, cronId);
     }
 
-    private void transfer(Ci ci, CiDao ciDao) {
-        if(ci.getIsCmdb()) {
-            ciDao.setSynCmdbCycle(ci.getSynCmdbCycle());
-        }
-        ciDao.setIsCmdb(ci.getIsCmdb());
-        ciDao.setEnName(ci.getEnName());
-        ciDao.setCnName(ci.getCnName());
+    @Override
+    public boolean updateLastUpdateTime(String ciName, String env, String lastUpdateTime) {
+        return ciRepository.updateLastUpdateTime(ciName, env, lastUpdateTime);
     }
+
+    @Override
+    public String getLastUpdateTime(String ciName, String env, String lastUpdateTime) {
+        return ciRepository.getLastUpdateTime(ciName, env, lastUpdateTime);
+    }
+
+
 
 }

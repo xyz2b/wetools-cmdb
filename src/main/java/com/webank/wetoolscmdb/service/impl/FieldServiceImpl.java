@@ -1,16 +1,19 @@
 package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
+import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import com.webank.wetoolscmdb.service.intf.FieldService;
+import com.webank.wetoolscmdb.utils.TransferUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +23,10 @@ import java.util.List;
 public class FieldServiceImpl implements FieldService {
     @Autowired
     FieldRepository fieldRepository;
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     @Override
     public boolean createFieldCollection(Ci ci) {
@@ -36,7 +43,7 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public boolean createField(Ci ci) {
+    public List<CiField> insertAllField(Ci ci) {
         String env = ci.getEnv();
         List<CiField> fieldList = ci.getFieldList();
 
@@ -44,23 +51,30 @@ public class FieldServiceImpl implements FieldService {
         for(CiField ciField : fieldList) {
             // 将元数据插入元数据集合中
             FieldDao fieldDao = new FieldDao();
-            transfer(ciField, fieldDao);
+            TransferUtil.transferCiFieldToFieldDao(ciField, fieldDao);
             fieldDao.setIsDelete(false);
             Date now = new Date();
-            fieldDao.setCreatedDate(now);
-            fieldDao.setUpdatedDate(now);
+            fieldDao.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
+            fieldDao.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
             fieldDao.setCi(ci.getEnName());
 
             fieldDaoList.add(fieldDao);
         }
 
-        List<FieldDao> rst = fieldRepository.insertAllField(fieldDaoList, env);
-        if (rst == null) {
+        List<FieldDao> data = fieldRepository.insertAllField(fieldDaoList, env);
+        if (data == null) {
             log.error("insert field failed: " + fieldDaoList);
-            return false;
+            return null;
         }
 
-        return true;
+        List<CiField> rst = new ArrayList<>(data.size());
+        for(FieldDao fieldDao : data) {
+            CiField ciField = new CiField();
+            TransferUtil.transferFieldDaoToCiField(fieldDao, ciField);
+            rst.add(ciField);
+        }
+
+        return rst;
     }
 
     @Override
@@ -69,12 +83,8 @@ public class FieldServiceImpl implements FieldService {
         return fieldRepository.fieldCollectionExisted(env);
     }
 
-    private void transfer(CiField ciField, FieldDao fieldDao) {
-        fieldDao.setCnName(ciField.getCnName());
-        fieldDao.setEnName(ciField.getEnName());
-        fieldDao.setIsCmdb(ciField.getIsCmdb());
-        fieldDao.setIsDisplay(ciField.getIsDisplay());
-        fieldDao.setPredictLength(ciField.getPredictLength());
-        fieldDao.setType(ciField.getType());
+    @Override
+    public List<String> findCiAllFieldName(String ci_name, String env) {
+        return fieldRepository.findCiAllFieldName(ci_name, env);
     }
 }

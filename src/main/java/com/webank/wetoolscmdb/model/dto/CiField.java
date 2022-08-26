@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CiField {
+    private String id;
     @JsonProperty("cn_name")
     private String cnName;
     @JsonProperty("en_name")
@@ -22,4 +23,12 @@ public class CiField {
     private String type;
     @JsonProperty("predict_length")
     private int predictLength;
+    @JsonProperty("created_date")
+    private String createdDate;
+    @JsonProperty("updated_date")
+    private String updatedDate;
+    @JsonProperty("updated_by")
+    private String updatedBy;
+    @JsonProperty("created_by")
+    private String createdBy;
 }
