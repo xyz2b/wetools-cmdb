@@ -86,13 +86,13 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public List<String> findCiAllFieldName(String ci_name, String env) {
-        return fieldRepository.findCiAllFieldName(ci_name, env);
+    public List<String> findCiAllFieldName(String ciName, String env) {
+        return fieldRepository.findCiAllFieldName(ciName, env);
     }
 
     @Override
-    public List<String> findCiAllCmdbFieldName(String ci_name, String env) {
-        return fieldRepository.findCiAllCmdbFieldName(ci_name, env);
+    public List<String> findCiAllCmdbFieldName(String ciName, String env) {
+        return fieldRepository.findCiAllCmdbFieldName(ciName, env);
     }
 
     @Override
@@ -157,5 +157,15 @@ public class FieldServiceImpl implements FieldService {
         defaultCiFields.add(updateBy);
 
         return defaultCiFields;
+    }
+
+    @Override
+    public boolean deleteField(String ciName, String env, String fieldName) {
+        return fieldRepository.deleteField(ciName, env, fieldName);
+    }
+
+    @Override
+    public long deleteCiAllField(String ciName, String env) {
+        return fieldRepository.deleteCiAllField(ciName, env);
     }
 }

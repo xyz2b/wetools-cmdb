@@ -134,16 +134,24 @@ public class CiController {
     @PostMapping(path = "/delete", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response deleteCi(@RequestBody Ci ci) {
+        boolean rst = ciService.deleteCi(ci.getEnName(), ci.getEnv());
 
+        if (rst) {
+            return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+        } else {
+            return new Response(WetoolsExceptionCode.FAILED, "failed", ci);
 
-        return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+        }
     }
 
     @PostMapping(path = "/delete_field", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response deleteCiField(@RequestBody Ci ci) {
+        int success = 0;
+        for(CiField ciField : ci.getFieldList()) {
+            success += fieldService.deleteField(ci.getEnName(), ci.getEnv(), ciField.getEnName()) ? 1 : 0;
+        }
 
-
-        return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
     }
 }

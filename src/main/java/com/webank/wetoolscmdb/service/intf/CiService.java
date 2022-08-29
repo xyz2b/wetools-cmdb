@@ -15,4 +15,6 @@ public interface CiService {
 
     boolean updateLastUpdateTime(String ciName, String env, String lastUpdateTime);
     String getLastUpdateTime(String ciName, String env, String lastUpdateTime);
+
+    boolean deleteCi(String ciName, String env);
 }

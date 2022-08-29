@@ -16,4 +16,6 @@ public interface FieldRepository {
     List<String> findCiAllFieldName(String ci_name, String env);
     List<String> findCiAllCmdbFieldName(String ci_name, String env);
     List<String> findCiAllNonCmdbFieldName(String ci_name, String env);
+    boolean deleteField(String ci_name, String env, String fieldName);
+    long deleteCiAllField(String ci_name, String env);
 }
