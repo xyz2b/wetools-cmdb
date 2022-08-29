@@ -1,5 +1,7 @@
 package com.webank.wetoolscmdb.controller;
 
+import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
+import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
@@ -14,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +38,10 @@ public class CiController {
 
     @Autowired
     CiDataService ciDataService;
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     @PostMapping(path = "/create", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
@@ -58,6 +66,30 @@ public class CiController {
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
             }
             ci.setFieldList(ciFieldList);
+        } else if (ci.getIsCmdb()) {    // 如果用户自定义了CMDB字段，用户一般不会自定义如下字段，需要加上，因为这几个字段是需要从cmdb同步过来并对之后的同步造成影响的
+            CiField updateDate = new CiField();
+            updateDate.setEnName(CiQueryConsist.QUERY_FILTER_UPDATED_DATE);
+            updateDate.setCnName(CiQueryConsist.QUERY_FILTER_UPDATED_DATE_CN);
+            updateDate.setIsCmdb(true);
+            updateDate.setIsDisplay(true);
+            updateDate.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date()));
+
+            CiField guid = new CiField();
+            guid.setEnName(CiQueryConsist.QUERY_FILTER_GUID);
+            guid.setCnName(CiQueryConsist.QUERY_FILTER_GUID);
+            guid.setIsCmdb(true);
+            guid.setIsDisplay(false);
+            guid.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date()));
+
+            CiField createDate = new CiField();
+            createDate.setEnName(CiQueryConsist.QUERY_FILTER_CREATE_DATE);
+            createDate.setCnName(CiQueryConsist.QUERY_FILTER_CREATE_DATE_CN);
+            createDate.setIsCmdb(true);
+            createDate.setIsDisplay(true);
+            createDate.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date()));
+
+            ci.getFieldList().add(updateDate);
+            ci.getFieldList().add(guid);
         }
 
         if(!fieldService.existedFieldMetaCollection(ci)) {
