@@ -95,4 +95,21 @@ public class FieldRepositoryImpl implements FieldRepository {
 
         return rst;
     }
+
+    @Override
+    public List<String> findCiAllNonCmdbFieldName(String ci_name, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
+        Query query = new Query();
+        query.fields().include(CiQueryConsist.QUERY_FILTER_EN_NAME).exclude(CiQueryConsist.QUERY_FILTER_ID);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name).and(CiQueryConsist.QUERY_FILTER_IS_CMDB).is(false);
+        query.addCriteria(criteria);
+        List<Document> documents = mongoTemplate.find(query, Document.class, collectionName);
+
+        List<String> rst = new ArrayList<>(documents.size());
+        for(Document document : documents) {
+            rst.add(document.getString(CiQueryConsist.QUERY_FILTER_EN_NAME));
+        }
+
+        return rst;
+    }
 }

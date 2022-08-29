@@ -15,4 +15,5 @@ public interface FieldRepository {
     List<FieldDao> findCiAllField(String ci_name, String env);
     List<String> findCiAllFieldName(String ci_name, String env);
     List<String> findCiAllCmdbFieldName(String ci_name, String env);
+    List<String> findCiAllNonCmdbFieldName(String ci_name, String env);
 }

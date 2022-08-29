@@ -64,7 +64,7 @@ public class CiDataServiceImpl implements CiDataService {
                 document = new Document();
                 document.putAll(d);
 
-                List<String> fields = fieldRepository.findCiAllFieldName(ci.getEnName(), ci.getEnv());
+                List<String> fields = fieldRepository.findCiAllNonCmdbFieldName(ci.getEnName(), ci.getEnv());
                 for(String field : fields) {
                     document.put(field, null);
                 }

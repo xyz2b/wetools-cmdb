@@ -6,5 +6,5 @@ public class CiFiledType {
     public static final String LIST = "list";
     public static final String MAP = "map";
     public static final String BOOLEAN = "boolean";
-    public static final String DATE = "DATE";
+    public static final String DATE = "date";
 }

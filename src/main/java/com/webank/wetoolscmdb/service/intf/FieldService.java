@@ -11,4 +11,8 @@ public interface FieldService {
     boolean existedFieldMetaCollection(Ci ci);
 
     List<String> findCiAllFieldName(String ci_name, String env);
+
+    List<String> findCiAllCmdbFieldName(String ci_name, String env);
+
+    List<CiField> defaultCmdbCiFields();
 }

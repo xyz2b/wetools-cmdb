@@ -174,8 +174,8 @@ public class CmdbServiceImpl implements CmdbService {
                     return -1;
                 }
 
-                // 查询该CI所有的Field，拿出是CMDB的字段，组成CI的Field填入CI的fieldList字段，只需要填充field的en_name即可
-                List<String> resultColumn = fieldService.findCiAllFieldName(type, env);
+                // 查询该CI所有的Field，拿出是CMDB的字段
+                List<String> resultColumn = fieldService.findCiAllCmdbFieldName(type, env);
 
                 // 从CMDB同步数据
                 int successUpdateSum = 0;
@@ -405,17 +405,21 @@ public class CmdbServiceImpl implements CmdbService {
         int successUpdateSum = 0;
         int startIndex = 0;
         CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex);
-        List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-        successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
-
-        while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-            cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
-            cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+        if(cmdbResponse.getHeaders().getContentRows() != 0) {
+            List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
             successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
-        }
 
+            while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
+                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                if(cmdbResponse.getHeaders().getContentRows() != 0) {
+                    cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+                    successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                }
+            }
+        }
         return successUpdateSum;
     }
+
 
     @Override
     public int getCmdbDataAllCount(String type) {
