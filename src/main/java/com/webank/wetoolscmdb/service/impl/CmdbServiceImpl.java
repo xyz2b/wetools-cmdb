@@ -3,10 +3,7 @@ package com.webank.wetoolscmdb.service.impl;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webank.wetoolscmdb.constant.consist.CiFiledType;
-import com.webank.wetoolscmdb.constant.consist.CmdbQueryResponseDataType;
-import com.webank.wetoolscmdb.constant.consist.PowerJobConsist;
-import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
+import com.webank.wetoolscmdb.constant.consist.*;
 import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
@@ -26,10 +23,7 @@ import tech.powerjob.common.enums.TimeExpressionType;
 import tech.powerjob.common.request.http.SaveJobInfoRequest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
