@@ -8,7 +8,6 @@ import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
-import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
 import com.webank.wetoolscmdb.service.intf.*;
 import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
@@ -182,12 +181,12 @@ public class CmdbServiceImpl implements CmdbService {
                 int startIndex = 0;
                 CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
                     cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
                 }
 
                 return successUpdateSum;
@@ -407,13 +406,13 @@ public class CmdbServiceImpl implements CmdbService {
         CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex);
         if(cmdbResponse.getHeaders().getContentRows() != 0) {
             List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-            successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+            successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
             while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
                 cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
                 if(cmdbResponse.getHeaders().getContentRows() != 0) {
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
                 }
             }
         }

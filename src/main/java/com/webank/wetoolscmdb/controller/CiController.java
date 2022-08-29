@@ -4,6 +4,7 @@ import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiData;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.Response;
 import com.webank.wetoolscmdb.service.intf.CiDataService;
@@ -151,6 +152,30 @@ public class CiController {
         for(CiField ciField : ci.getFieldList()) {
             success += fieldService.deleteField(ci.getEnName(), ci.getEnv(), ciField.getEnName()) ? 1 : 0;
         }
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
+    }
+
+    // 手动新增的数据，GUID都为空，调用该接口新增数据时，需要将CI所有字段都填充好，没有值的为null
+    @PostMapping(path = "/add_data", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response addCiData(@RequestBody CiData ciData) {
+        Ci ci = new Ci();
+        ci.setEnv(ciData.getEnv());
+        ci.setEnName(ciData.getEnName());
+        int success = ciDataService.insertCiData(ci, ciData.getData());
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
+    }
+
+    // 目前只能修改非CMDB的数据，更新时只需要填充需要更新的字段即可，但是需要带上_id，会根据ID去寻找需要更新的记录是哪条
+    @PostMapping(path = "/update_data", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response updateCiData(@RequestBody CiData ciData) {
+        Ci ci = new Ci();
+        ci.setEnv(ciData.getEnv());
+        ci.setEnName(ciData.getEnName());
+        int success = ciDataService.updateCiData(ci, ciData.getData());
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
     }

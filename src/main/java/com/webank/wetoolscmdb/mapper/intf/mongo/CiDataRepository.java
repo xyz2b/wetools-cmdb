@@ -15,7 +15,8 @@ public interface CiDataRepository {
 
     String getLastUpdateTime(String ciName, String env);
 
-    Document findOne(String ciName, String env, String guid);
+    Document findOneByGuid(String ciName, String env, String guid);
+    Document findOneById(String ciName, String env, String id);
 
     Document saveOne(String ciName, String env, Document document);
     List<Document> saveAll(String ciName, String env, List<Document> documents);
