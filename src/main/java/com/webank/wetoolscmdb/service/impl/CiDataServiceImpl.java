@@ -38,7 +38,7 @@ public class CiDataServiceImpl implements CiDataService {
         // 创建元数据集合
         MongoCollection<Document> ciCollection = ciDataRepository.createCiDataCollection(type, env);
         if (ciCollection == null) {
-            log.error("create ci collection failed: " + env);
+            log.error("create ci collection failed: [{}]", env);
             return false;
         }
         return true;

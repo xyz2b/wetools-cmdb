@@ -35,7 +35,7 @@ public class FieldServiceImpl implements FieldService {
         // 创建CI字段的元数据集合
         MongoCollection<Document> ciCollection = fieldRepository.createFieldCollection(env);
         if (ciCollection == null) {
-            log.error("create field collection failed: " + env);
+            log.error("create field collection failed, env: [{}]", env);
             return false;
         }
 
@@ -63,7 +63,7 @@ public class FieldServiceImpl implements FieldService {
 
         List<FieldDao> data = fieldRepository.insertAllField(fieldDaoList, env);
         if (data == null) {
-            log.error("insert field failed: " + fieldDaoList);
+            log.error("insert field failed: [{}]", fieldDaoList);
             return null;
         }
 

@@ -50,7 +50,7 @@ public class CiServiceImpl implements CiService {
 
         CiDao data = ciRepository.insertOneCi(ciDao, env);
         if (data == null) {
-            log.error("insert ci failed: " + ciDao);
+            log.error("insert ci failed: [{}]", ciDao);
             return null;
         }
 
@@ -67,7 +67,7 @@ public class CiServiceImpl implements CiService {
         // 创建元数据集合
         MongoCollection<Document> ciCollection = ciRepository.createCiCollection(env);
         if (ciCollection == null) {
-            log.error("create ci collection failed: " + env);
+            log.error("create ci collection failed: [{}]", env);
             return false;
         }
         return true;

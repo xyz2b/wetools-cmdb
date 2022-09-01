@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.crypto.spec.PSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class CiController {
         if((ci.getFieldList() == null || ci.getFieldList().size() == 0) && ci.getIsCmdb()) {
             List<CiField> ciFieldList =  cmdbService.getCmdbCiAllField(ci);
             if(ciFieldList.size() == 0) {
-                log.warn("env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.");
+                log.warn("env: [{}], type: [{}] ci is not have data in cmdb.", ci.getEnv(), ci.getEnName());
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
             }
             ci.setFieldList(ciFieldList);

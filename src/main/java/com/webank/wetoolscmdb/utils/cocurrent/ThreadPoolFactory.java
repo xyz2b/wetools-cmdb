@@ -79,17 +79,17 @@ public class ThreadPoolFactory {
         @Override
         public void run() {
             synchronized (this) {
-                log.info(getName() + " starting.... ");
+                log.info("[{}] starting....", getName());
                 if (!this.hasShutdown) {
                     this.hasShutdown = true;
                     long beginTime = System.currentTimeMillis();
                     try {
                         this.callback.call();
                     } catch (Exception e) {
-                        log.error(getName() + " error: " + e.getMessage());
+                        log.error("[{}] error: [{}]", getName(), e.getMessage());
                     }
                     long consumingTimeTotal = System.currentTimeMillis() - beginTime;
-                    log.info(getName() + "  耗时(ms): " + consumingTimeTotal);
+                    log.info("[{}] 耗时(ms): [{}]",getName(), consumingTimeTotal);
                 }
             }
         }
