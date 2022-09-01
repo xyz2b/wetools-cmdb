@@ -1,7 +1,10 @@
 package com.webank.wetoolscmdb.controller;
 
+import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
+import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiData;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.Response;
 import com.webank.wetoolscmdb.service.intf.CiDataService;
@@ -14,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.crypto.spec.PSource;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,10 @@ public class CiController {
 
     @Autowired
     CiDataService ciDataService;
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     @PostMapping(path = "/create", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
@@ -59,6 +66,8 @@ public class CiController {
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
             }
             ci.setFieldList(ciFieldList);
+        } else if (ci.getIsCmdb()) {    // 如果用户自定义了CMDB字段，用户一般不会自定义如下字段，需要加上，因为这几个字段是需要从cmdb同步过来并对之后的同步造成影响的
+            ci.getFieldList().addAll(fieldService.defaultCmdbCiFields());
         }
 
         if(!fieldService.existedFieldMetaCollection(ci)) {
@@ -115,7 +124,7 @@ public class CiController {
         }
 
         if (haveCmdbField) {
-            // TODO: 从CMDB同步该字段的数据，并更新到数据库中（可以考虑全量同步一次）
+            // TODO: 从CMDB同步该字段的数据，并更新到数据库中（全量同步一次）
             cmdbService.syncManyColumnCmdbDataAsync(ci);
         }
 
@@ -125,16 +134,48 @@ public class CiController {
     @PostMapping(path = "/delete", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response deleteCi(@RequestBody Ci ci) {
+        boolean rst = ciService.deleteCi(ci.getEnName(), ci.getEnv());
 
+        if (rst) {
+            return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+        } else {
+            return new Response(WetoolsExceptionCode.FAILED, "failed", ci);
 
-        return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+        }
     }
 
     @PostMapping(path = "/delete_field", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response deleteCiField(@RequestBody Ci ci) {
+        int success = 0;
+        for(CiField ciField : ci.getFieldList()) {
+            success += fieldService.deleteField(ci.getEnName(), ci.getEnv(), ciField.getEnName()) ? 1 : 0;
+        }
 
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
+    }
 
-        return new Response(WetoolsExceptionCode.SUCCESS, "success", ci);
+    // 手动新增的数据，GUID都为空，调用该接口新增数据时，需要将CI所有字段都填充好，没有值的为null
+    @PostMapping(path = "/add_data", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response addCiData(@RequestBody CiData ciData) {
+        Ci ci = new Ci();
+        ci.setEnv(ciData.getEnv());
+        ci.setEnName(ciData.getEnName());
+        int success = ciDataService.insertCiData(ci, ciData.getData());
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
+    }
+
+    // 目前只能修改非CMDB的数据，更新时只需要填充需要更新的字段即可，但是需要带上_id，会根据ID去寻找需要更新的记录是哪条
+    @PostMapping(path = "/update_data", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response updateCiData(@RequestBody CiData ciData) {
+        Ci ci = new Ci();
+        ci.setEnv(ciData.getEnv());
+        ci.setEnName(ciData.getEnName());
+        int success = ciDataService.updateCiData(ci, ciData.getData());
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
     }
 }

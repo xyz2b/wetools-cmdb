@@ -71,11 +71,22 @@ public class CiDataRepositoryImpl implements CiDataRepository {
     }
 
     @Override
-    public Document findOne(String ciName, String env, String guid) {
+    public Document findOneByGuid(String ciName, String env, String guid) {
         String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
         Query query = new Query();
         Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_GUID).is(guid);
+        query.addCriteria(criteria);
+
+        return mongoTemplate.findOne(query, Document.class, collectionName);
+    }
+
+    @Override
+    public Document findOneById(String ciName, String env, String id) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
+
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_ID).is(id);
         query.addCriteria(criteria);
 
         return mongoTemplate.findOne(query, Document.class, collectionName);

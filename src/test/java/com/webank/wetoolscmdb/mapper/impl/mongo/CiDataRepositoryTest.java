@@ -8,12 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -28,7 +24,7 @@ public class CiDataRepositoryTest {
 
     @Test
     void testFindOne() {
-        Document document = ciDataRepository.findOne("wb_host", "uat", "11111");
+        Document document = ciDataRepository.findOneByGuid("wb_host", "uat", "11111");
         System.out.println(document.getString("host_assetid"));
     }
 

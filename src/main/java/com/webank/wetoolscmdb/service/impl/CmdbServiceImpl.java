@@ -3,15 +3,11 @@ package com.webank.wetoolscmdb.service.impl;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webank.wetoolscmdb.constant.consist.CiFiledType;
-import com.webank.wetoolscmdb.constant.consist.CmdbQueryResponseDataType;
-import com.webank.wetoolscmdb.constant.consist.PowerJobConsist;
-import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
+import com.webank.wetoolscmdb.constant.consist.*;
 import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
-import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseData;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
 import com.webank.wetoolscmdb.service.intf.*;
 import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
@@ -26,10 +22,7 @@ import tech.powerjob.common.enums.TimeExpressionType;
 import tech.powerjob.common.request.http.SaveJobInfoRequest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -180,20 +173,20 @@ public class CmdbServiceImpl implements CmdbService {
                     return -1;
                 }
 
-                // 查询该CI所有的Field，拿出是CMDB的字段，组成CI的Field填入CI的fieldList字段，只需要填充field的en_name即可
-                List<String> resultColumn = fieldService.findCiAllFieldName(type, env);
+                // 查询该CI所有的Field，拿出是CMDB的字段
+                List<String> resultColumn = fieldService.findCiAllCmdbFieldName(type, env);
 
                 // 从CMDB同步数据
                 int successUpdateSum = 0;
                 int startIndex = 0;
                 CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
                     cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
                 }
 
                 return successUpdateSum;
@@ -413,17 +406,21 @@ public class CmdbServiceImpl implements CmdbService {
         int successUpdateSum = 0;
         int startIndex = 0;
         CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex);
-        List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-        successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+        if(cmdbResponse.getHeaders().getContentRows() != 0) {
+            List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+            successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
-        while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-            cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
-            cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-            successUpdateSum += ciDataService.updateCiData(ci, cmdbData);
+            while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
+                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                if(cmdbResponse.getHeaders().getContentRows() != 0) {
+                    cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
+                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
+                }
+            }
         }
-
         return successUpdateSum;
     }
+
 
     @Override
     public int getCmdbDataAllCount(String type) {

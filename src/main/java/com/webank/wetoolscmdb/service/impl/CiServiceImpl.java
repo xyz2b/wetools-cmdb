@@ -132,6 +132,13 @@ public class CiServiceImpl implements CiService {
         return ciRepository.getLastUpdateTime(ciName, env, lastUpdateTime);
     }
 
+    @Override
+    public boolean deleteCi(String ciName, String env) {
+        boolean deleteCiRst = ciRepository.deleteCi(ciName, env);
 
+        long deleteFieldNum = fieldRepository.deleteCiAllField(ciName, env);
+
+        return deleteCiRst && deleteFieldNum > 0;
+    }
 
 }

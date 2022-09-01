@@ -133,4 +133,23 @@ public class CiRepositoryImpl implements CiRepository {
 
         return rst.getString(CiQueryConsist.QUERY_FILTER_LAST_UPDATE_TIME);
     }
+
+    @Override
+    public boolean deleteCi(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(ciName);
+        query.addCriteria(criteria);
+
+        Update update = new Update();
+        update.set(CiQueryConsist.QUERY_FILTER_IS_DELETE, true);
+
+        CiDao ciDao = mongoTemplate.findAndModify(query, update, CiDao.class, collectionName);
+        if (ciDao == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 }

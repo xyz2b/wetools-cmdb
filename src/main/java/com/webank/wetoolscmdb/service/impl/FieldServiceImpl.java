@@ -1,6 +1,8 @@
 package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
+import com.webank.wetoolscmdb.constant.consist.CiFiledType;
+import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
@@ -84,7 +86,86 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public List<String> findCiAllFieldName(String ci_name, String env) {
-        return fieldRepository.findCiAllFieldName(ci_name, env);
+    public List<String> findCiAllFieldName(String ciName, String env) {
+        return fieldRepository.findCiAllFieldName(ciName, env);
+    }
+
+    @Override
+    public List<String> findCiAllCmdbFieldName(String ciName, String env) {
+        return fieldRepository.findCiAllCmdbFieldName(ciName, env);
+    }
+
+    @Override
+    public List<CiField> defaultCmdbCiFields() {
+        List<CiField> defaultCiFields = new ArrayList<>(5);
+
+        Date date = new Date();
+
+        CiField updateDate = new CiField();
+        updateDate.setEnName(CiQueryConsist.QUERY_FILTER_UPDATED_DATE);
+        updateDate.setCnName(CiQueryConsist.QUERY_FILTER_UPDATED_DATE_CN);
+        updateDate.setIsCmdb(true);
+        updateDate.setIsDisplay(true);
+        updateDate.setType(CiFiledType.DATE);
+        updateDate.setPredictLength(CmdbApiConsist.DATE_FORMAT_MILLISECOND.length());
+        updateDate.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        updateDate.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(updateDate);
+
+        CiField guid = new CiField();
+        guid.setEnName(CiQueryConsist.QUERY_FILTER_GUID);
+        guid.setCnName(CiQueryConsist.QUERY_FILTER_GUID);
+        guid.setIsCmdb(true);
+        guid.setIsDisplay(false);
+        guid.setType(CiFiledType.STRING);
+        guid.setPredictLength(15);
+        guid.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        guid.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(guid);
+
+        CiField createDate = new CiField();
+        createDate.setEnName(CiQueryConsist.QUERY_FILTER_CREATE_DATE);
+        createDate.setCnName(CiQueryConsist.QUERY_FILTER_CREATE_DATE_CN);
+        createDate.setIsCmdb(true);
+        createDate.setIsDisplay(true);
+        createDate.setType(CiFiledType.DATE);
+        createDate.setPredictLength(CmdbApiConsist.DATE_FORMAT_MILLISECOND.length());
+        createDate.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        createDate.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(createDate);
+
+        CiField createBy = new CiField();
+        createBy.setEnName(CiQueryConsist.QUERY_FILTER_CREATE_BY);
+        createBy.setCnName(CiQueryConsist.QUERY_FILTER_CREATE_BY_CN);
+        createBy.setIsCmdb(true);
+        createBy.setIsDisplay(true);
+        createBy.setType(CiFiledType.STRING);
+        createBy.setPredictLength(20);
+        createBy.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        createBy.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(createBy);
+
+        CiField updateBy = new CiField();
+        updateBy.setEnName(CiQueryConsist.QUERY_FILTER_UPDATED_BY);
+        updateBy.setCnName(CiQueryConsist.QUERY_FILTER_UPDATED_BY_CN);
+        updateBy.setIsCmdb(true);
+        updateBy.setIsDisplay(true);
+        updateBy.setType(CiFiledType.STRING);
+        updateBy.setPredictLength(20);
+        updateBy.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        updateBy.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(updateBy);
+
+        return defaultCiFields;
+    }
+
+    @Override
+    public boolean deleteField(String ciName, String env, String fieldName) {
+        return fieldRepository.deleteField(ciName, env, fieldName);
+    }
+
+    @Override
+    public long deleteCiAllField(String ciName, String env) {
+        return fieldRepository.deleteCiAllField(ciName, env);
     }
 }

@@ -10,5 +10,13 @@ public interface FieldService {
     List<CiField> insertAllField(Ci ci);
     boolean existedFieldMetaCollection(Ci ci);
 
-    List<String> findCiAllFieldName(String ci_name, String env);
+    List<String> findCiAllFieldName(String ciName, String env);
+
+    List<String> findCiAllCmdbFieldName(String ciName, String env);
+
+    List<CiField> defaultCmdbCiFields();
+
+    boolean deleteField(String ciName, String env, String fieldName);
+
+    long deleteCiAllField(String ciName, String env);
 }
