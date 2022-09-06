@@ -178,4 +178,12 @@ public class CiController {
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
     }
+
+    @PostMapping(path = "/get", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response getCiMetadata(@RequestBody Ci ci) {
+         Ci ciMetadata = ciService.findCi(ci.getEnName(), ci.getEnv());
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", ciMetadata);
+    }
 }
