@@ -186,4 +186,13 @@ public class CiController {
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", ciMetadata);
     }
+
+    @PostMapping(path = "/get_data", consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public Response getCiData(@RequestBody Ci ci) {
+
+        List<Map<String, Object>> rst = ciDataService.getAllData(ci.getEnName(), ci.getEnv());
+
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", rst);
+    }
 }

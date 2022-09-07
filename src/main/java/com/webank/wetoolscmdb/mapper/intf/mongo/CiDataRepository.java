@@ -3,8 +3,6 @@ package com.webank.wetoolscmdb.mapper.intf.mongo;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
-import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -22,4 +20,6 @@ public interface CiDataRepository {
     List<Document> saveAll(String ciName, String env, List<Document> documents);
 
     long updateAll(String ciName, String env, Map<String, Object> data);
+
+    List<Map<String, Object>> getAllData(String ciName, String env);
 }

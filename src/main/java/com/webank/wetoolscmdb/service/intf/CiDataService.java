@@ -17,4 +17,6 @@ public interface CiDataService {
     String getLastUpdateTime(String ciName, String env);
 
     long updateAll(String ciName, String env, Map<String, Object> data);
+
+    List<Map<String, Object>> getAllData(String ciName, String env);
 }

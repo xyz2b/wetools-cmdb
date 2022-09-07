@@ -123,4 +123,9 @@ public class CiDataServiceImpl implements CiDataService {
     public long updateAll(String ciName, String env, Map<String, Object> data) {
         return ciDataRepository.updateAll(ciName, env, data);
     }
+
+    @Override
+    public List<Map<String, Object>> getAllData(String ciName, String env) {
+        return ciDataRepository.getAllData(ciName, env);
+    }
 }

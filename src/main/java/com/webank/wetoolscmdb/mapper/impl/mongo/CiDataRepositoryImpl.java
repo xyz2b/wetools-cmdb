@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
 @Component
@@ -129,4 +126,33 @@ public class CiDataRepositoryImpl implements CiDataRepository {
 
         return updateResult.getModifiedCount();
     }
+
+    @Override
+    public List<Map<String, Object>> getAllData(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
+
+        String fieldMetadataCollectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
+        Query query = new Query();
+        query.fields().include(CiQueryConsist.QUERY_FILTER_EN_NAME).exclude(CiQueryConsist.QUERY_FILTER_ID);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName);
+        query.addCriteria(criteria);
+        List<Document> filedDocuments = mongoTemplate.find(query, Document.class, fieldMetadataCollectionName);
+
+        List<Document> documents = mongoTemplate.findAll(Document.class, collectionName);
+
+        List<Map<String, Object>> rst = new ArrayList<>(documents.size());
+
+        for(Document document : documents) {
+            Map<String, Object> map = new HashMap<>(filedDocuments.size());
+            for(Document filedDocument : filedDocuments) {
+                String fieldName = filedDocument.getString(CiQueryConsist.QUERY_FILTER_EN_NAME);
+                Object value = document.getDate(fieldName);
+                map.putIfAbsent(fieldName, value);
+            }
+            rst.add(map);
+        }
+        return rst;
+    }
+
+
 }
