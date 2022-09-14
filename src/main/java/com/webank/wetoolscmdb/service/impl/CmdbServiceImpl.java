@@ -85,6 +85,49 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
+    public List<CiField> getCmdbCiField(String ciName, List<String> fieldName) {
+
+        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ciName, fieldName);
+
+        List<CiField> ciFieldList = new ArrayList<>(cmdbCiFieldAttributes.size());
+
+        for(Map.Entry<String, CmdbResponseDataHeader> cmdbResponseDataHeaderEntry : cmdbCiFieldAttributes.entrySet()) {
+            CiField ciField = new CiField();
+
+            CmdbResponseDataHeader cmdbResponseDataHeader = cmdbResponseDataHeaderEntry.getValue();
+
+            ciField.setEnName(cmdbResponseDataHeaderEntry.getKey());
+            ciField.setCnName(cmdbResponseDataHeaderEntry.getValue().getName());
+            ciField.setIsCmdb(true);
+            ciField.setIsDisplay(cmdbResponseDataHeader.getDisplayType().equals("1"));
+
+            if(cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.REF)) {
+                ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.MULTI_REF)) {
+                ciField.setType(CiFiledType.LIST);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.SELECT)) {
+                ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.TEXT)) {
+                ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.TEXTAREA)) {
+                ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.NUMBER)) {
+                ciField.setType(CiFiledType.NUMBER);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.HIDDEN)) {
+                ciField.setType(CiFiledType.STRING);
+            } else if (cmdbResponseDataHeader.getDataType().equals(CmdbQueryResponseDataType.DATE)) {
+                ciField.setType(CiFiledType.DATE);
+            } else {
+                log.warn("unknown cmdb response data field type, code: [{}], field_name: [{}], type: [{}]", WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR, cmdbResponseDataHeaderEntry.getKey(), cmdbResponseDataHeader.getDataType());
+                continue;
+            }
+            ciFieldList.add(ciField);
+        }
+
+        return ciFieldList;
+    }
+
+    @Override
     public void syncCmdbAllDataAsync(Ci ci) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
             @Override

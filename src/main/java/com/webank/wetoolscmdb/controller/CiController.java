@@ -109,14 +109,23 @@ public class CiController {
         boolean haveCmdbField = false;
         List<String> fieldNameList = fieldService.findCiAllFieldName(ci.getEnName(), ci.getEnv());
         List<CiField> ciFieldList = new ArrayList<>(ci.getFieldList());
+
+        List<String> cmdbCiFieldList = new ArrayList<>();
         for(CiField ciField : ciFieldList) {
             if(fieldNameList.contains(ciField.getEnName())) {
                 ci.getFieldList().remove(ciField);
             } else {
                 if(ciField.getIsCmdb()) {
                     haveCmdbField = true;
+                    cmdbCiFieldList.add(ciField.getEnName());
+                    ci.getFieldList().remove(ciField);
                 }
             }
+        }
+
+        if(haveCmdbField) {
+            List<CiField> rst = cmdbService.getCmdbCiField(ci.getEnName(), cmdbCiFieldList);
+            ci.getFieldList().addAll(rst);
         }
 
         if(ci.getFieldList() != null && ci.getFieldList().size() != 0) {

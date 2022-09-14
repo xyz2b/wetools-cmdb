@@ -9,6 +9,8 @@ import java.util.Map;
 public interface CmdbService {
     List<CiField> getCmdbCiAllField(Ci ci);
 
+    List<CiField> getCmdbCiField(String ciName, List<String> fieldName);
+
     // 返回同步成功的记录数
     void syncCmdbAllDataAsync(Ci ci);
     void syncManyColumnCmdbAllDataAsyncAndRegisterCron(Ci ci);
