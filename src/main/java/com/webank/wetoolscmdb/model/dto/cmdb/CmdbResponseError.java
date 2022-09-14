@@ -4,10 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class CmdbRes {
+public class CmdbResponseError {
     private Object data;
-    private CmdbResponseHeaders headers;
+    private int retCode;
     private String msg;
-    private Integer retCode;
 }

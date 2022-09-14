@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,12 +47,11 @@ public class CiController {
     @PostMapping(path = "/create", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response createCi(@RequestBody Ci ci) {
-        // metadata ci collection已经存在了，不需要再创建了
+        // 判断要创建的CI是否已经存在，已经存在就不重复创建
         if(!ciService.existedCiMetaCollection(ci)) {
             ciService.createCiMetaCollection(ci);
         }
 
-        // 判断要创建的CI是否已经存在，已经存在就不重复创建
         if(ciService.existedCi(ci)) {
             return new Response(WetoolsExceptionCode.SUCCESS, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is existed.", null);
         }
@@ -60,7 +60,14 @@ public class CiController {
         Ci ciRst = ciService.insertOneCi(ci);
 
         if((ci.getFieldList() == null || ci.getFieldList().size() == 0) && ci.getIsCmdb()) {
-            List<CiField> ciFieldList =  cmdbService.getCmdbCiAllField(ci);
+            List<CiField> ciFieldList = null;
+            try {
+                ciFieldList = cmdbService.getCmdbCiAllField(ci);
+            } catch (Exception e) {
+                ciService.deleteCi(ci.getEnName(), ci.getEnv());
+                e.printStackTrace();
+            }
+
             if(ciFieldList.size() == 0) {
                 log.warn("env: [{}], type: [{}] ci is not have data in cmdb.", ci.getEnv(), ci.getEnName());
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
@@ -101,7 +108,8 @@ public class CiController {
         // 判断字段是否存在，同时判断新增的字段是否有CMDB的字段
         boolean haveCmdbField = false;
         List<String> fieldNameList = fieldService.findCiAllFieldName(ci.getEnName(), ci.getEnv());
-        for(CiField ciField : ci.getFieldList()) {
+        List<CiField> ciFieldList = new ArrayList<>(ci.getFieldList());
+        for(CiField ciField : ciFieldList) {
             if(fieldNameList.contains(ciField.getEnName())) {
                 ci.getFieldList().remove(ciField);
             } else {
@@ -171,10 +179,18 @@ public class CiController {
     @PostMapping(path = "/update_data", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response updateCiData(@RequestBody CiData ciData) {
+        if(ciData.getData() == null || ciData.getData().size() == 0) {
+            return new Response(WetoolsExceptionCode.SUCCESS, "success", "data is not existed");
+        }
+
         Ci ci = new Ci();
         ci.setEnv(ciData.getEnv());
         ci.setEnName(ciData.getEnName());
         int success = ciDataService.updateCiData(ci, ciData.getData());
+
+        if(success == -1) {
+            return new Response(WetoolsExceptionCode.FAILED, "not have id", null);
+        }
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", success);
     }

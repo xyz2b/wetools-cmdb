@@ -8,6 +8,7 @@ import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -83,7 +84,7 @@ public class CiDataRepositoryImpl implements CiDataRepository {
         String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
         Query query = new Query();
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_ID).is(id);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_ID).is(new ObjectId(id));
         query.addCriteria(criteria);
 
         return mongoTemplate.findOne(query, Document.class, collectionName);
@@ -134,7 +135,7 @@ public class CiDataRepositoryImpl implements CiDataRepository {
         String fieldMetadataCollectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
         query.fields().include(CiQueryConsist.QUERY_FILTER_EN_NAME).exclude(CiQueryConsist.QUERY_FILTER_ID);
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
         List<Document> filedDocuments = mongoTemplate.find(query, Document.class, fieldMetadataCollectionName);
 

@@ -60,7 +60,7 @@ public class FieldRepositoryImpl implements FieldRepository {
     public List<FieldDao> findCiAllField(String ci_name, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
         return mongoTemplate.find(query, FieldDao.class, collectionName);
     }
@@ -70,7 +70,7 @@ public class FieldRepositoryImpl implements FieldRepository {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
         query.fields().include(CiQueryConsist.QUERY_FILTER_EN_NAME).exclude(CiQueryConsist.QUERY_FILTER_ID);
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
         List<Document> documents = mongoTemplate.find(query, Document.class, collectionName);
 
@@ -120,7 +120,7 @@ public class FieldRepositoryImpl implements FieldRepository {
     public boolean deleteField(String ci_name, String env, String fieldName) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(fieldName);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(fieldName).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
 
         Update update = new Update();
@@ -138,7 +138,7 @@ public class FieldRepositoryImpl implements FieldRepository {
     public long deleteCiAllField(String ci_name, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
 
         Update update = new Update();

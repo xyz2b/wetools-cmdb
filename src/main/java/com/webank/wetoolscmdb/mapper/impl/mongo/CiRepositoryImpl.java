@@ -63,7 +63,7 @@ public class CiRepositoryImpl implements CiRepository {
     public CiDao findCi(String ciName, String env) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
         Query query = new Query();
-        Criteria criteria = Criteria.where("en_name").is(ciName);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, CiDao.class, collectionName);
     }

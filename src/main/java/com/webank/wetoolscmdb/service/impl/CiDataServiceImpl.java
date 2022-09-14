@@ -3,12 +3,17 @@ package com.webank.wetoolscmdb.service.impl;
 import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
+import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiDataRepository;
+import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.service.intf.CiDataService;
+import com.webank.wetoolscmdb.utils.exception.WetoolsCmdbException;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +26,9 @@ import java.util.Map;
 public class CiDataServiceImpl implements CiDataService {
     @Autowired
     CiDataRepository ciDataRepository;
+
+    @Autowired
+    CiRepository ciRepository;
 
     @Autowired
     FieldRepository fieldRepository;
@@ -96,7 +104,14 @@ public class CiDataServiceImpl implements CiDataService {
 
         for(Map<String, Object> d : data) {
             String id = (String) d.get(CiQueryConsist.QUERY_FILTER_ID);
+            if(id == null) {
+                return -1;
+            }
 
+            ObjectId objectId = new ObjectId(id);
+            d.put(CiQueryConsist.QUERY_FILTER_ID, objectId);
+
+            // TODO: 更新的字段可能已经被逻辑删除
             Document document = ciDataRepository.findOneById(ci.getEnName(), ci.getEnv(), id);
             if (document == null) { // 新的一条数据，就插入，TODO: 插入时需要补齐没有的字段
 
@@ -126,6 +141,10 @@ public class CiDataServiceImpl implements CiDataService {
 
     @Override
     public List<Map<String, Object>> getAllData(String ciName, String env) {
+        CiDao ciDao = ciRepository.findCi(ciName, env);
+        if (ciDao == null) {
+            return null;
+        }
         return ciDataRepository.getAllData(ciName, env);
     }
 }
