@@ -110,26 +110,26 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI的总数据量
-    public int getCiDataCount(String type) {
-        CmdbResponse response = standardQueryCmdb(type, 0, 1, true, new HashMap<>(0), new ArrayList<>(0));
+    public int getCiDataCount(String type, String env) {
+        CmdbResponse response = standardQueryCmdb(type, 0, 1, true, new HashMap<>(0), new ArrayList<>(0), env);
         return Integer.parseInt(response.getHeaders().getTotalRows());
     }
 
     // 获取某个CI指定过滤条件的数据量
-    public int getCiDataCount(String type, Map<String, Object> filter) {
-        CmdbResponse response = standardQueryCmdb(type, 0, 1, true, filter, new ArrayList<>(0));
+    public int getCiDataCount(String type, Map<String, Object> filter, String env) {
+        CmdbResponse response = standardQueryCmdb(type, 0, 1, true, filter, new ArrayList<>(0), env);
         return Integer.parseInt(response.getHeaders().getTotalRows());
     }
 
     // 获取某个CI所有字段的属性信息
-    public Map<String, CmdbResponseDataHeader> getCiFiledAttributes(String type) {
-        return getCiFiledAttributes(type, new ArrayList<>(0));
+    public Map<String, CmdbResponseDataHeader> getCiFiledAttributes(String type, String env) {
+        return getCiFiledAttributes(type, new ArrayList<>(0), env);
     }
 
     // 获取某个CI指定字段的属性信息
     // guid、created_by、created_date、updated_date是默认属性，指定不指定这四个字段都会返回这四个字段的属性信息
-    public Map<String, CmdbResponseDataHeader> getCiFiledAttributes(String type, List<String> resultColumn) {
-        CmdbResponse response = standardQueryCmdb(type, 0, 0, true, new HashMap<>(0), resultColumn);
+    public Map<String, CmdbResponseDataHeader> getCiFiledAttributes(String type, List<String> resultColumn, String env) {
+        CmdbResponse response = standardQueryCmdb(type, 0, 0, true, new HashMap<>(0), resultColumn, env);
         Map<String, CmdbResponseDataHeader> ciFiledAttributes = new HashMap<>(response.getData().getHeader().size());
         for(CmdbResponseDataHeader header : response.getData().getHeader()) {
             ciFiledAttributes.put(header.getEnName(), header);
@@ -138,14 +138,14 @@ public class CmdbApiUtil {
     }
 
     // 获取综合查询模板所有字段的属性信息
-    public Map<String, CmdbResponseDataHeader> getTemplateFiledAttributes(String type) {
-        return getTemplateFiledAttributes(type, new ArrayList<>(0));
+    public Map<String, CmdbResponseDataHeader> getTemplateFiledAttributes(String type, String env) {
+        return getTemplateFiledAttributes(type, new ArrayList<>(0), env);
     }
 
     // 获取综合查询模板指定字段的属性信息
     // 目前CMDB并未对综合查询模板的指定字段进行过滤，不管是否指定字段，都会返回所有字段的属性信息
-    public Map<String, CmdbResponseDataHeader> getTemplateFiledAttributes(String type, List<String> resultColumn) {
-        CmdbResponse response = templateQueryCmdb(type, 0, 0, true, new HashMap<>(0), resultColumn);
+    public Map<String, CmdbResponseDataHeader> getTemplateFiledAttributes(String type, List<String> resultColumn, String env) {
+        CmdbResponse response = templateQueryCmdb(type, 0, 0, true, new HashMap<>(0), resultColumn, env);
         Map<String, CmdbResponseDataHeader> ciFiledAttributes = new HashMap<>(response.getData().getHeader().size());
         for(CmdbResponseDataHeader header : response.getData().getHeader()) {
             ciFiledAttributes.put(header.getEnName(), header);
@@ -154,66 +154,82 @@ public class CmdbApiUtil {
     }
 
     // 获取某个CI的所有数据
-    public CmdbResponseData getCiData(String type) {
-        CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+    public CmdbResponseData getCiData(String type, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getCiAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = standardQueryCmdb(type, 0, pageSize,true, new HashMap<>(0), new ArrayList<>(0), env);
+
+        getCiAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个CI指定 过滤条件、返回字段 的所有数据
-    public CmdbResponseData getCiData(String type, Map<String, Object> filter, List<String> resultColumn) {
-        CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
+    public CmdbResponseData getCiData(String type, Map<String, Object> filter, List<String> resultColumn, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getCiAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = standardQueryCmdb(type, 0, pageSize,true, filter, resultColumn, env);
+
+        getCiAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个CI指定 过滤条件 的所有数据
-    public CmdbResponseData getCiData(String type, Map<String, Object> filter) {
-        CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
+    public CmdbResponseData getCiData(String type, Map<String, Object> filter, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getCiAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = standardQueryCmdb(type, 0, pageSize,true, filter, new ArrayList<>(0), env);
+
+        getCiAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个CI指定 返回字段 的所有数据
-    public CmdbResponseData getCiData(String type, List<String> resultColumn) {
-        CmdbResponse firstResponse = standardQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), resultColumn);
+    public CmdbResponseData getCiData(String type, List<String> resultColumn, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getCiAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = standardQueryCmdb(type, 0, pageSize,true, new HashMap<>(0), resultColumn, env);
+
+        getCiAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个CI指定 返回字段 的startIndex开始的page条数据
-    public CmdbResponse getCiDataByStartIndex(String type, List<String> resultColumn, int startIndex) {
-        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), resultColumn);
+    public CmdbResponse getCiDataByStartIndex(String type, List<String> resultColumn, int startIndex, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
+
+        return standardQueryCmdb(type, startIndex, pageSize,true, new HashMap<>(0), resultColumn, env);
     }
 
     // 获取某个CI的startIndex开始的page条数据
-    public CmdbResponse getCiDataByStartIndex(String type, int startIndex) {
-        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+    public CmdbResponse getCiDataByStartIndex(String type, int startIndex, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
+
+        return standardQueryCmdb(type, startIndex, pageSize,true, new HashMap<>(0), new ArrayList<>(0), env);
     }
 
     // 获取某个CI指定 过滤条件 返回字段 的startIndex开始的page条数据
-    public CmdbResponse getCiDataByStartIndex(String type, Map<String, Object> filter, List<String> resultColumn, int startIndex) {
-        return standardQueryCmdb(type, startIndex, props.getPageSize(),true, filter, new ArrayList<>(0));
+    public CmdbResponse getCiDataByStartIndex(String type, Map<String, Object> filter, List<String> resultColumn, int startIndex, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
+
+        return standardQueryCmdb(type, startIndex, pageSize,true, filter, new ArrayList<>(0), env);
     }
 
     // 获取某个CI指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
-    public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn) {
-        CmdbResponse response = standardQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
+    public CmdbResponseData getCiData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn, String env) {
+        CmdbResponse response = standardQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn, env);
         return response.getData();
     }
 
-    private void getCiAllPageData(String type, CmdbResponse firstResponse) {
+    private void getCiAllPageData(String type, CmdbResponse firstResponse, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
+
         CmdbResponse response = firstResponse;
         while (!isLastPage(response)) {
-            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+            response = standardQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + pageSize, pageSize,true, new HashMap<>(0), new ArrayList<>(0), env);
 
             firstResponse.getData().getContent().addAll(response.getData().getContent());
         }
@@ -231,73 +247,93 @@ public class CmdbApiUtil {
     }
 
     // 获取某个 Template 的所有数据
-    public CmdbResponseData getTemplateData(String type) {
-        CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+    public CmdbResponseData getTemplateData(String type, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getTemplateAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = templateQueryCmdb(type, 0, pageSize,true, new HashMap<>(0), new ArrayList<>(0), env);
+
+        getTemplateAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个 Template 指定 过滤条件、返回字段 的所有数据
-    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter, List<String> resultColumn) {
-        CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, resultColumn);
+    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter, List<String> resultColumn, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getTemplateAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = templateQueryCmdb(type, 0, pageSize,true, filter, resultColumn, env);
+
+        getTemplateAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个 Template 指定 过滤条件 的所有数据
-    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter) {
-        CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, filter, new ArrayList<>(0));
+    public CmdbResponseData getTemplateData(String type, Map<String, Object> filter, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
+        CmdbResponse firstResponse = templateQueryCmdb(type, 0, pageSize,true, filter, new ArrayList<>(0), env);
 
-        getTemplateAllPageData(type, firstResponse);
+        getTemplateAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
     // 获取某个 Template 指定 返回字段 的所有数据
-    public CmdbResponseData getTemplateData(String type, List<String> resultColumn) {
-        CmdbResponse firstResponse = templateQueryCmdb(type, 0, props.getPageSize(),true, new HashMap<>(0), resultColumn);
+    public CmdbResponseData getTemplateData(String type, List<String> resultColumn, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        getTemplateAllPageData(type, firstResponse);
+        CmdbResponse firstResponse = templateQueryCmdb(type, 0, pageSize,true, new HashMap<>(0), resultColumn, env);
+
+        getTemplateAllPageData(type, firstResponse, env);
 
         return firstResponse.getData();
     }
 
-    private void getTemplateAllPageData(String type, CmdbResponse firstResponse) {
+    private void getTemplateAllPageData(String type, CmdbResponse firstResponse, String env) {
+        int pageSize = props.getPageSize().getOrDefault(env, 500);
         CmdbResponse response = firstResponse;
         // 由于CMDB 综合查询接口 实际返回行数有问题，只能下面这样判断
         while (response.getHeaders().getContentRows() != 0) {
-            response = templateQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + props.getPageSize(), props.getPageSize(),true, new HashMap<>(0), new ArrayList<>(0));
+            response = templateQueryCmdb(type, Integer.parseInt(response.getHeaders().getStartIndex()) + pageSize, pageSize,true, new HashMap<>(0), new ArrayList<>(0), env);
 
             firstResponse.getData().getContent().addAll(response.getData().getContent());
         }
     }
 
     // 获取某个Template指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据
-    public CmdbResponseData getTemplateData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn) {
-        CmdbResponse response = templateQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn);
+    public CmdbResponseData getTemplateData(String type, int startIndex, int pageSize, Map<String, Object> filter, List<String> resultColumn, String env) {
+        CmdbResponse response = templateQueryCmdb(type, startIndex, pageSize, true, filter, resultColumn, env);
         return response.getData();
     }
 
     // CMDB统一查询接口
-    private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbApiConsist.STANDARD_QUERY + ".json";
-        return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
+    private CmdbResponse standardQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn, String env) {
+        String cmdbUrl = props.getUrl().get(env);
+        if(cmdbUrl == null) {
+            throw new WetoolsCmdbException(WetoolsExceptionCode.REQUEST_CMDB_ERROR, env + " url is null");
+        }
+        String url = cmdbUrl + CMDB_API_URL + CmdbApiConsist.STANDARD_QUERY + ".json";
+        return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn, env);
     }
 
     // CMDB综合查询接口
-    private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn) {
-        String url = props.getUrl() + CMDB_API_URL + CmdbApiConsist.TEMPLATE_QUERY + ".json";
-        return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn);
+    private CmdbResponse templateQueryCmdb(String type, int startIndex, int pageSize, boolean isPaging, Map<String, Object> filter, List<String> resultColumn, String env) {
+        String cmdbUrl = props.getUrl().get(env);
+        if(cmdbUrl == null) {
+            throw new WetoolsCmdbException(WetoolsExceptionCode.REQUEST_CMDB_ERROR, env + " url is null");
+        }
+        String url = cmdbUrl + CMDB_API_URL + CmdbApiConsist.TEMPLATE_QUERY + ".json";
+        return queryCmdb(url, type, startIndex, pageSize, isPaging, filter, resultColumn, env);
     }
 
     // 查询CMDB数据的基础方法
     private CmdbResponse queryCmdb(String url, String type, int startIndex, int pageSize, boolean isPaging,
-                                 Map<String, Object> filter, List<String> resultColumn) {
-        CmdbRequest request = new CmdbRequest(props.getAuthUser(), type, startIndex, pageSize, CmdbApiConsist.ACTION_SELECT, isPaging, filter, resultColumn);
+                                 Map<String, Object> filter, List<String> resultColumn, String env) {
+        String authUser = props.getAuthUser().get(env);
+        if(authUser == null) {
+            throw new WetoolsCmdbException(WetoolsExceptionCode.REQUEST_CMDB_ERROR, env + " url is null");
+        }
+        CmdbRequest request = new CmdbRequest(authUser, type, startIndex, pageSize, CmdbApiConsist.ACTION_SELECT, isPaging, filter, resultColumn);
 
         String response = rest.postForObject(url, request, String.class);
 

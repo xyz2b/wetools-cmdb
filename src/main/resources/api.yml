@@ -1,5 +1,8 @@
 # 调用cmdb api的相关配置
 cmdb:
-  url: http://uat.cmdb.weoa.com         # cmdb api host
-  authUser: xyzjiao                     # cmdb api auth user key
-  pageSize: 500                         # 一次请求CMDB获取的数据量大小
+  url:                                        # cmdb api host
+    {"uat": "http://uat.cmdb.weoa.com", "prd": "", "cloudprd": "", "drprd": "", "preprd": ""}
+  authUser:                                   # cmdb api auth user key
+    {"uat": "xyzjiao"}
+  pageSize:                                   # 一次请求CMDB获取的数据量大小
+    {"uat": 500}

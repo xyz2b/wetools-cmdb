@@ -68,7 +68,7 @@ public class CiController {
                 e.printStackTrace();
             }
 
-            if(ciFieldList.size() == 0) {
+            if(ciFieldList == null || ciFieldList.size() == 0) {
                 log.warn("env: [{}], type: [{}] ci is not have data in cmdb.", ci.getEnv(), ci.getEnName());
                 return new Response(WetoolsExceptionCode.CMDB_CI_DATA_IS_NULL, "env " + ci.getEnv() + ", " + ci.getEnName() + " ci is not have data in cmdb.", null);
             }
@@ -101,11 +101,15 @@ public class CiController {
     @PostMapping(path = "/create_field", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public Response createCiField(@RequestBody Ci ci) {
+        if(!ciService.existedCi(ci)) {
+            return new Response(WetoolsExceptionCode.SUCCESS, "success", "ci is not existed");
+        }
+
         if(ci.getFieldList() == null || ci.getFieldList().size() == 0) {
             return new Response(WetoolsExceptionCode.SUCCESS, "success", "ci field list is null or not new field");
         }
 
-        // 判断字段是否存在，同时判断新增的字段是否有CMDB的字段
+        // 判断字段是否存在已存在的就不重复添加了，同时判断新增的字段是否有CMDB的字段，CMDB的字段需要去CMDB拉取字段信息进行填充
         boolean haveCmdbField = false;
         List<String> fieldNameList = fieldService.findCiAllFieldName(ci.getEnName(), ci.getEnv());
         List<CiField> ciFieldList = new ArrayList<>(ci.getFieldList());
@@ -123,8 +127,12 @@ public class CiController {
             }
         }
 
+        if(ci.getFieldList().isEmpty() && cmdbCiFieldList.isEmpty()) {
+            return new Response(WetoolsExceptionCode.SUCCESS, "success", "ci field list is existed");
+        }
+
         if(haveCmdbField) {
-            List<CiField> rst = cmdbService.getCmdbCiField(ci.getEnName(), cmdbCiFieldList);
+            List<CiField> rst = cmdbService.getCmdbCiField(ci.getEnName(), cmdbCiFieldList, ci.getEnv());
             ci.getFieldList().addAll(rst);
         }
 

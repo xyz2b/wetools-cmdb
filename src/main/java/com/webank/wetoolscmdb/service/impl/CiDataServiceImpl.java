@@ -114,7 +114,6 @@ public class CiDataServiceImpl implements CiDataService {
             // TODO: 更新的字段可能已经被逻辑删除
             Document document = ciDataRepository.findOneById(ci.getEnName(), ci.getEnv(), id);
             if (document == null) { // 新的一条数据，就插入，TODO: 插入时需要补齐没有的字段
-
                 document = new Document();
                 document.putAll(d);
             } else {    // 已存在的一条数据，就更新

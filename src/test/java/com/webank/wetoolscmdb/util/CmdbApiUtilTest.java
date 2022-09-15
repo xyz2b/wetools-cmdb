@@ -25,14 +25,14 @@ public class CmdbApiUtilTest {
     @Test
     public void testGetCiFiledAttributes() {
         String type = "wb_host";
-        Map<String, CmdbResponseDataHeader> ciFiledAttributes = cmdbApiUtil.getCiFiledAttributes(type);
+        Map<String, CmdbResponseDataHeader> ciFiledAttributes = cmdbApiUtil.getCiFiledAttributes(type, "uat");
         System.out.println(ciFiledAttributes);
     }
 
     @Test
     public void testGetTemplateFiledAttributes() {
         String type = "subsystem_app_instance";
-        Map<String, CmdbResponseDataHeader> templateFiledAttributes = cmdbApiUtil.getTemplateFiledAttributes(type);
+        Map<String, CmdbResponseDataHeader> templateFiledAttributes = cmdbApiUtil.getTemplateFiledAttributes(type, "uat");
         System.out.println(templateFiledAttributes);
     }
 
@@ -43,21 +43,21 @@ public class CmdbApiUtilTest {
         filter.put("system_domain", "工具域");
         List<String> resultColumn = new ArrayList<>();
         resultColumn.add("host_lanip");
-        CmdbResponseData ciData = cmdbApiUtil.getCiData(type, filter, resultColumn);
+        CmdbResponseData ciData = cmdbApiUtil.getCiData(type, filter, resultColumn, "uat");
         System.out.println(ciData.getContent());
     }
 
     @Test
     public void testGetTemplateData() {
         String type = "hostInfo";
-        CmdbResponseData templateData = cmdbApiUtil.getTemplateData(type);
+        CmdbResponseData templateData = cmdbApiUtil.getTemplateData(type, "uat");
         System.out.println(templateData.getContent().size());
     }
 
     @Test
     public void testParseCmdbResponseData() throws ParseException {
         String type = "wb_host";
-        CmdbResponseData templateData = cmdbApiUtil.getCiData(type);
+        CmdbResponseData templateData = cmdbApiUtil.getCiData(type, "uat");
         System.out.println(cmdbApiUtil.parseCmdbResponseData(templateData));
     }
 }

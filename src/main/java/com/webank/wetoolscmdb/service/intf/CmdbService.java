@@ -9,7 +9,7 @@ import java.util.Map;
 public interface CmdbService {
     List<CiField> getCmdbCiAllField(Ci ci);
 
-    List<CiField> getCmdbCiField(String ciName, List<String> fieldName);
+    List<CiField> getCmdbCiField(String ciName, List<String> fieldName, String env);
 
     // 返回同步成功的记录数
     void syncCmdbAllDataAsync(Ci ci);
@@ -17,8 +17,8 @@ public interface CmdbService {
 
     int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter);
 
-    int getCmdbDataAllCount(String type);
-    int getCmdbDataCountByFilter(String type, Map<String, Object> filter);
+    int getCmdbDataAllCount(String type, String env);
+    int getCmdbDataCountByFilter(String type, Map<String, Object> filter, String env);
 
     void syncManyColumnCmdbDataAsync(Ci ci);
 }

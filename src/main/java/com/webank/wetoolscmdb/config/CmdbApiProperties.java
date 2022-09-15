@@ -11,6 +11,8 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.util.Map;
 
 @Configuration("CmdbApiConfig")
 @ConfigurationProperties(prefix = "cmdb")
@@ -20,10 +22,10 @@ import javax.validation.constraints.NotEmpty;
 @ToString
 @Validated
 public class CmdbApiProperties {
-    @NotEmpty
-    private String url;
-    @NotEmpty
-    private String authUser;
-    @Min(1)
-    private int pageSize = 500;
+    @NotNull
+    private Map<String, String> url;
+    @NotNull
+    private Map<String, String> authUser;
+    @NotNull
+    private Map<String, Integer> pageSize;
 }

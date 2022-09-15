@@ -24,6 +24,7 @@ import tech.powerjob.common.request.http.SaveJobInfoRequest;
 import java.io.IOException;
 import java.util.*;
 
+
 @Service
 @Slf4j
 public class CmdbServiceImpl implements CmdbService {
@@ -44,7 +45,7 @@ public class CmdbServiceImpl implements CmdbService {
     @Override
     public List<CiField> getCmdbCiAllField(Ci ci) {
 
-        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ci.getEnName());
+        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ci.getEnName(), ci.getEnv());
 
         List<CiField> ciFieldList = new ArrayList<>(cmdbCiFieldAttributes.size());
 
@@ -85,9 +86,9 @@ public class CmdbServiceImpl implements CmdbService {
     }
 
     @Override
-    public List<CiField> getCmdbCiField(String ciName, List<String> fieldName) {
+    public List<CiField> getCmdbCiField(String ciName, List<String> fieldName, String env) {
 
-        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ciName, fieldName);
+        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ciName, fieldName, env);
 
         List<CiField> ciFieldList = new ArrayList<>(cmdbCiFieldAttributes.size());
 
@@ -95,6 +96,14 @@ public class CmdbServiceImpl implements CmdbService {
             CiField ciField = new CiField();
 
             CmdbResponseDataHeader cmdbResponseDataHeader = cmdbResponseDataHeaderEntry.getValue();
+
+            String envName = cmdbResponseDataHeaderEntry.getKey();
+            // 跳过CMDB默认都会返回的字段
+            if(envName.equals(CmdbApiConsist.QUERY_FILTER_UPDATED_DATE) || envName.equals(CmdbApiConsist.QUERY_FILTER_CREATED_DATE)
+                    || envName.equals(CmdbApiConsist.QUERY_FILTER_UPDATED_BY) || envName.equals(CmdbApiConsist.QUERY_FILTER_CREATED_BY)
+                    || envName.equals(CmdbApiConsist.QUERY_FILTER_GUID)) {
+                continue;
+            }
 
             ciField.setEnName(cmdbResponseDataHeaderEntry.getKey());
             ciField.setCnName(cmdbResponseDataHeaderEntry.getValue().getName());
@@ -133,6 +142,7 @@ public class CmdbServiceImpl implements CmdbService {
             @Override
             public Integer execute() throws Exception {
                 String type = ci.getEnName();
+                String env = ci.getEnv();
 
                 // sync cmdb all data
                 // 数据库中没有对应的CI元信息
@@ -148,12 +158,12 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successInsertSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, startIndex);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                 successInsertSum += ciDataService.insertCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, cmdbApiUtil.nextIndex(cmdbResponse));
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successInsertSum += ciDataService.insertCiData(ci, cmdbData);
                 }
@@ -172,7 +182,7 @@ public class CmdbServiceImpl implements CmdbService {
                     log.error("type: [{}], env: [{}] ci metadata is not existed", type, env);
                     return;
                 }
-                int totalDataCount = getCmdbDataAllCount(type);
+                int totalDataCount = getCmdbDataAllCount(type, env);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
                 } else {
@@ -222,12 +232,12 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successUpdateSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                 successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
                 }
@@ -248,7 +258,7 @@ public class CmdbServiceImpl implements CmdbService {
                     return;
                 }
 
-                int totalDataCount = getCmdbDataAllCount(type);
+                int totalDataCount = getCmdbDataAllCount(type, env);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
                 } else {
@@ -279,6 +289,7 @@ public class CmdbServiceImpl implements CmdbService {
             @Override
             public Integer execute() throws Exception {
                 String type = ci.getEnName();
+                String env = ci.getEnv();
 
                 // 数据库中没有对应的CI元信息
                 if(ciService.isUpdating(ci) == null) {
@@ -301,12 +312,12 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successInsertSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                 successInsertSum += ciDataService.insertCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successInsertSum += ciDataService.insertCiData(ci, cmdbData);
                 }
@@ -327,7 +338,7 @@ public class CmdbServiceImpl implements CmdbService {
                     return;
                 }
 
-                int totalDataCount = getCmdbDataAllCount(type);
+                int totalDataCount = getCmdbDataAllCount(type, env);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
                 } else {
@@ -448,13 +459,13 @@ public class CmdbServiceImpl implements CmdbService {
         // 从CMDB同步数据
         int successUpdateSum = 0;
         int startIndex = 0;
-        CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex);
+        CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
         if(cmdbResponse.getHeaders().getContentRows() != 0) {
             List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
             successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
             while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse));
+                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                 if(cmdbResponse.getHeaders().getContentRows() != 0) {
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
@@ -466,12 +477,12 @@ public class CmdbServiceImpl implements CmdbService {
 
 
     @Override
-    public int getCmdbDataAllCount(String type) {
-        return cmdbApiUtil.getCiDataCount(type);
+    public int getCmdbDataAllCount(String type, String env) {
+        return cmdbApiUtil.getCiDataCount(type, env);
     }
 
     @Override
-    public int getCmdbDataCountByFilter(String type, Map<String, Object> filter) {
-        return cmdbApiUtil.getCiDataCount(type, filter);
+    public int getCmdbDataCountByFilter(String type, Map<String, Object> filter, String env) {
+        return cmdbApiUtil.getCiDataCount(type, filter, env);
     }
 }
