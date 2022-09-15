@@ -26,4 +26,5 @@ public class ItsmApiProperties {
     private String appKey;
     private String appid;
     private List<Integer> otpdTeamIds;
+    private int pageSize;
 }

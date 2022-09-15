@@ -10,5 +10,7 @@ import java.util.List;
 public class ItsmProblemsRequest {
     private int pageSize;
     private int currentPage;
+    private long createDateSearchEnd;
+    private long createDateSearchStart;
     private List<Integer> handlerTeamIds;
 }

@@ -20,4 +20,6 @@ public class ItsmProblemsResponse {
     private String solveDate;
     private String solveUser;
     private String solveUserName;
+    private String solveTeamName;
+    private int solveTeamId;
 }

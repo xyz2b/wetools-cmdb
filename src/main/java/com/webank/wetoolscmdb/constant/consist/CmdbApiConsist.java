@@ -20,6 +20,7 @@ public class CmdbApiConsist {
     public static final String QUERY_FILTER_LESS_THAN = "<";
     public static final String QUERY_FILTER_LESS_THAN_OR_EQUAL = "<=";
 
+    public static final String DATE_FORMAT_YEAR = "yyyy";
     public static final String DATE_FORMAT_DAY = "yyyy-MM-dd";
     public static final String DATE_FORMAT_SECOND = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_FORMAT_MILLISECOND = "yyyy-MM-dd HH:mm:ss:SSS";

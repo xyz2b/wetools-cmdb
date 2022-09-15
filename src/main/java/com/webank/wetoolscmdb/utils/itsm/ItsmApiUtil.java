@@ -1,17 +1,14 @@
 package com.webank.wetoolscmdb.utils.itsm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webank.wetoolscmdb.config.CmdbApiProperties;
 import com.webank.wetoolscmdb.config.ItsmApiProperties;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.constant.consist.ItsmApiConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
-import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
-import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseError;
 import com.webank.wetoolscmdb.model.dto.itsm.ItsmProblemsRequest;
 import com.webank.wetoolscmdb.model.dto.itsm.ItsmProblemsResponse;
 import com.webank.wetoolscmdb.model.dto.itsm.ItsmResponse;
+import com.webank.wetoolscmdb.model.dto.itsm.ItsmResponseData;
 import com.webank.wetoolscmdb.utils.exception.WetoolsCmdbException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,18 +36,35 @@ public class ItsmApiUtil {
 
     private final String ITSM_EVENT_API_URL = "/itsm/event";
 
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT_YEAR = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_YEAR);
+
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_DAY = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_DAY);
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_SECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_SECOND);
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<ItsmProblemsResponse>  getProblems(ItsmProblemsRequest itsmProblemsRequest) throws JsonProcessingException {
+    public List<ItsmProblemsResponse>  getProblemsBySolveTeamAndCreateTime(List<Integer> handlerTeamIds, String createStartTime, String createEndTime) throws ParseException {
         String url = props.getUrl() + ITSM_EVENT_API_URL + "/getProblems.any";
 
-        log.debug("request [{}] body [{}]", url, itsmProblemsRequest);
+        ItsmProblemsRequest itsmProblemsRequest = new ItsmProblemsRequest();
+        itsmProblemsRequest.setHandlerTeamIds(handlerTeamIds);
+        itsmProblemsRequest.setCurrentPage(1);
+        itsmProblemsRequest.setPageSize(props.getPageSize());
 
-        List<Map<String, Object>> response = queryItsm(url, itsmProblemsRequest);
+        Date startTime = SIMPLE_DATE_FORMAT_SECOND.parse(createStartTime);
+        itsmProblemsRequest.setCreateDateSearchStart(startTime.getTime());
+        Date endTime = SIMPLE_DATE_FORMAT_SECOND.parse(createEndTime);
+        itsmProblemsRequest.setCreateDateSearchEnd(endTime.getTime());
+
+        ItsmResponseData itsmResponseData = queryItsm(url, itsmProblemsRequest);
+        List<Map<String, Object>> response = itsmResponseData.getData();
+
+        while (!isLastPage(itsmResponseData)) {
+            itsmProblemsRequest.setCurrentPage(itsmResponseData.getCurrentPage() + 1);
+            itsmResponseData = queryItsm(url, itsmProblemsRequest);
+            response.addAll(itsmResponseData.getData());
+        }
 
         if (response.size() == 0) {
             return null;
@@ -58,42 +72,63 @@ public class ItsmApiUtil {
 
         List<ItsmProblemsResponse> itsmProblemsResponses = new ArrayList<>();
         for(Map<String, Object> r : response) {
-            long id = (int) r.getOrDefault(ItsmApiConsist.ID, 0);
-            String title = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_TITLE, "");
-            String status = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_STATUS, 0);
-            String source = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_SOURCE_NAME, "");
-            String priority = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_PRIORITY_LEVEL, "");
-
-            Object createDate = r.get(ItsmApiConsist.PROBLEM_CREATE_DATE);
-            String create = null;
-            if(createDate != null) {
-                create = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)createDate));
+            Object son = r.get(ItsmApiConsist.PROBLEM_SAFE_EVENT_SON_VO_LIST);
+            if (son != null) {
+                List<Map<String, Object>> sonProblemList = (List<Map<String, Object>>) son;
+                for(Map<String, Object> sonR : sonProblemList) {
+                    ItsmProblemsResponse itsmProblemsResponse = parseItsmProblemData(sonR);
+                    itsmProblemsResponses.add(itsmProblemsResponse);
+                }
+            } else {
+                ItsmProblemsResponse itsmProblemsResponse = parseItsmProblemData(r);
+                itsmProblemsResponses.add(itsmProblemsResponse);
             }
-
-            Object planDate = r.get(ItsmApiConsist.PROBLEM_PLAN_DATE);
-            String plan = null;
-            if(planDate != null) {
-                plan = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)planDate));
-            }
-
-            Object solveDate = r.get(ItsmApiConsist.PROBLEM_SOLVE_DATE);
-            String solve = null;
-            if(solveDate != null) {
-                solve = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)solveDate));
-            }
-
-            String solveUser = (String) r.getOrDefault(ItsmApiConsist.SOLVE_HANDLER, "");
-            String solveUserName = (String) r.getOrDefault(ItsmApiConsist.SOLVE_HANDLER_NAME, "");
-
-            ItsmProblemsResponse itsmProblemsResponse = new ItsmProblemsResponse(id, title, status, source, priority, create,
-                    plan, solve, solveUser, solveUserName);
-            itsmProblemsResponses.add(itsmProblemsResponse);
         }
 
         return itsmProblemsResponses;
     }
 
-    private List<Map<String, Object>> queryItsm(String url, Object body) {
+    private ItsmProblemsResponse parseItsmProblemData(Map<String, Object> r) {
+        long id = (int) r.getOrDefault(ItsmApiConsist.ID, 0);
+        String title = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_TITLE, "");
+        String status = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_STATUS, 0);
+        String source = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_SOURCE_NAME, "");
+        String priority = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_PRIORITY_LEVEL, "");
+
+        Object createDate = r.get(ItsmApiConsist.PROBLEM_CREATE_DATE);
+        String create = null;
+        if(createDate != null) {
+            create = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)createDate));
+        }
+
+        Object planDate = r.get(ItsmApiConsist.PROBLEM_PLAN_DATE);
+        String plan = null;
+        if(planDate != null) {
+            plan = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)planDate));
+        }
+
+        Object solveDate = r.get(ItsmApiConsist.PROBLEM_SOLVE_DATE);
+        String solve = null;
+        if(solveDate != null) {
+            solve = SIMPLE_DATE_FORMAT_MILLISECOND.format(new Date((long)solveDate));
+        }
+
+        String solveUser = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_SOLVE_USER, "");
+        String solveUserName = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_SOLVE_USER_NAME, "");
+        String solveTeamName = (String) r.getOrDefault(ItsmApiConsist.PROBLEM_SOLVE_USER_TEAM_NAME, "");
+        int solveTeamId = (int) r.getOrDefault(ItsmApiConsist.PROBLEM_SOLVE_USER_TEAM_ID, 0);
+
+        ItsmProblemsResponse itsmProblemsResponse = new ItsmProblemsResponse(id, title, status, source, priority, create,
+                plan, solve, solveUser, solveUserName, solveTeamName, solveTeamId);
+
+        return itsmProblemsResponse;
+    }
+
+    private boolean isLastPage(ItsmResponseData itsmResponseData) {
+        return itsmResponseData.getCurrentPage() == itsmResponseData.getTotalPage();
+    }
+
+    private ItsmResponseData queryItsm(String url, Object body) {
         long currentTimestamp = System.currentTimeMillis();
         int random = (int) ((Math.random()*9+1)*1000);
 
@@ -115,7 +150,7 @@ public class ItsmApiUtil {
 
         checkResponse(response, url);
 
-        return response.getData().getData();
+        return response.getData();
     }
 
     private void checkResponse(ItsmResponse response, String url) {
