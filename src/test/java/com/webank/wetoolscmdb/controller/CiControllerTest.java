@@ -54,8 +54,8 @@ public class CiControllerTest {
     public void createField() throws Exception {
         List<CiField> ciFieldList = new ArrayList<>();
         CiField ciField = new CiField();
-        ciField.setIsCmdb(false);
-        ciField.setEnName("test");
+        ciField.setIsCmdb(true);
+        ciField.setEnName("all_i");
         ciFieldList.add(ciField);
 
         Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  ciFieldList, null, null, null, null, null, null);
