@@ -1,31 +1,29 @@
 package com.webank.wetoolscmdb.config;
 
 import com.webank.wetoolscmdb.utils.YmlPropertyResourceFactory;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.Map;
+import java.util.List;
 
-@Configuration("CmdbApiConfig")
-@ConfigurationProperties(prefix = "cmdb")
+@Configuration("ItsmApiProperties")
+@ConfigurationProperties(prefix = "itsm")
 @PropertySource(value = {"classpath:api.yml"}, ignoreResourceNotFound = false, encoding = "UTF-8", name = "api.yml", factory = YmlPropertyResourceFactory.class)
 @Getter
 @Setter
 @ToString
 @Validated
-public class CmdbApiProperties {
-    @NotNull
-    private Map<String, String> url;
-    @NotNull
-    private Map<String, String> authUser;
-    @NotNull
-    private Map<String, Integer> pageSize;
+public class ItsmApiProperties {
+    private String url;
+    private String authUser;
+    private String appKey;
+    private String appid;
+    private List<Integer> otpdTeamIds;
 }

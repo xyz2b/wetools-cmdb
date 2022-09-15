@@ -6,3 +6,13 @@ cmdb:
     {"uat": "xyzjiao"}
   pageSize:                                   # 一次请求CMDB获取的数据量大小
     {"uat": 500}
+
+itsm:
+  url: http://itsm.weoa.com
+  authUser: xyzjiao
+  appid: 91
+  appKey: 8283c407-d0b7-4cfe-a3ad-7f3e1c806ca1
+  otpdTeamIds:
+    - 470600
+    - 470700
+    - 471000

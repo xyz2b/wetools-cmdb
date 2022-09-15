@@ -7,4 +7,6 @@ public class WetoolsExceptionCode {
     public static final int UNKNOWN_CMDB_TYPE_ERROR = 1002;
     public static final int CMDB_CI_DATA_IS_NULL = 1003;
     public static final int UPDATE_MONGODB_ERROR = 2001;
+
+    public static final int REQUEST_ITSM_ERROR = 3001;
 }

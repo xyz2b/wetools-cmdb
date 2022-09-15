@@ -172,8 +172,8 @@
     <!-- 4. 最终的策略 -->
     <!-- 4.1 开发环境:打印控制台-->
     <springProfile name="dev">
-        <logger name="com.webank.wetoolscmdb" level="info"/>
-        <root level="info">
+        <logger name="com.webank.wetoolscmdb" level="debug"/>
+        <root level="debug">
             <appender-ref ref="CONSOLE" />
             <appender-ref ref="DEBUG_FILE" />
             <appender-ref ref="INFO_FILE" />
