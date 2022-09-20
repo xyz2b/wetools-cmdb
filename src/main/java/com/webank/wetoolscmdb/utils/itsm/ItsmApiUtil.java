@@ -43,7 +43,6 @@ public class ItsmApiUtil {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-
     public List<ItsmProblemsResponse>  getProblemsBySolveTeamAndCreateTime(List<Integer> handlerTeamIds, String createStartTime, String createEndTime) throws ParseException {
         String url = props.getUrl() + ITSM_EVENT_API_URL + "/getProblems.any";
 
