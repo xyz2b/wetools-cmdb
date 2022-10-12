@@ -9,4 +9,7 @@ public class WetoolsExceptionCode {
     public static final int UPDATE_MONGODB_ERROR = 2001;
 
     public static final int REQUEST_ITSM_ERROR = 3001;
+
+    public static final int REQUEST_IMS_ERROR = 4001;
+
 }

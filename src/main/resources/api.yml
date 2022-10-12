@@ -17,3 +17,9 @@ itsm:
     - 470700
     - 471000
   pageSize: 50
+
+ims:
+  url:
+    {"uat": "http://172.21.0.130:10815"}
+  authUserKey:
+    {"uat": "xyzjiao"}
