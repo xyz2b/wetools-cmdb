@@ -24,4 +24,6 @@ public class ImsApiProperties {
     private Map<String, String> url;
     @NotNull
     private Map<String, String> authUserKey;
+    @NotNull
+    private Map<String, Integer> pageSize;
 }
