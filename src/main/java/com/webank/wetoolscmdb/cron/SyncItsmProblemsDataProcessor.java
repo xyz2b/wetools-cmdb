@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+// TODO: 一键配置SyncItsmProblemsDataProcessor定时任务的接口
+
 //  定期同步ITSM问题单，根据上一次同步问题单中的最晚创建时间作为时间节点一直到当前时间，根据创建时间进行过滤。
 //  如果当前没有同步过问题单，库里的记录数为0，就同步当前时间这一年内的问题单
 @Component
@@ -36,7 +38,7 @@ public class SyncItsmProblemsDataProcessor implements BasicProcessor {
         String lastProblemCreateDate = itsmProblemsService.findLastProblemCreateTime();
 
         int count = 0;
-        List<ItsmProblemsResponse> itsmProblemsResponses = null;
+        List<ItsmProblemsResponse> itsmProblemsResponses;
         Date now = new Date();
         if (lastProblemCreateDate == null) {
             String nowYear = SIMPLE_DATE_FORMAT_YEAR.format(now);
