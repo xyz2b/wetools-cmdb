@@ -5,7 +5,6 @@ import com.mongodb.client.result.UpdateResult;
 import com.webank.wetoolscmdb.constant.consist.CiCollectionNamePrefix;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
-import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;

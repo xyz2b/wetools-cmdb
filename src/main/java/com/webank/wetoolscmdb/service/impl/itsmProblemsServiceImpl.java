@@ -33,4 +33,13 @@ public class itsmProblemsServiceImpl implements ItsmProblemsService {
         List<ItsmProblemsDao> rst = itsmProblemsRepository.insertAll(itsmProblemsDaos);
         return rst.size();
     }
+
+    @Override
+    public String findLastProblemCreateTime() {
+        ItsmProblemsDao itsmProblemsDao = itsmProblemsRepository.findLastProblem();
+        if(itsmProblemsDao == null) {
+            return null;
+        }
+        return itsmProblemsDao.getCreateDate();
+    }
 }

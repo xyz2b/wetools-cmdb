@@ -13,7 +13,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class ItsmProblemsRepositoryImpl implements ItsmProblemsRepository {
@@ -73,5 +72,15 @@ public class ItsmProblemsRepositoryImpl implements ItsmProblemsRepository {
         query.addCriteria(criteria);
 
         return mongoTemplate.find(query, ItsmProblemsDao.class, ItsmCollectionName.ITSM_PROBLEM);
+    }
+
+    @Override
+    public ItsmProblemsDao findLastProblem() {
+        Query query = new Query();
+        query.fields().exclude(ItsmQueryConsist.QUERY_FILTER_ID);
+        query.with(Sort.by(Sort.Order.desc(ItsmQueryConsist.QUERY_PROBLEM_STATUS)));
+        query.limit(1);
+
+        return mongoTemplate.findOne(query, ItsmProblemsDao.class, ItsmCollectionName.ITSM_PROBLEM);
     }
 }

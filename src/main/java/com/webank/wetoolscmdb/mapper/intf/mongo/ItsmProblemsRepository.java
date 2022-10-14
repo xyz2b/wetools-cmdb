@@ -20,4 +20,6 @@ public interface ItsmProblemsRepository {
     List<ItsmProblemsDao> findBySolveUserAndStatus(String solveUser, String status);
 
     List<ItsmProblemsDao> findBySolveTeamAndStatus(String solveTeam, String status);
+
+    ItsmProblemsDao findLastProblem();
 }
