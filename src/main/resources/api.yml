@@ -1,14 +1,14 @@
 # 调用cmdb api的相关配置
 cmdb:
   url:                                        # cmdb api host
-    {"uat": "http://uat.cmdb.weoa.com", "prd": "", "cloudprd": "", "drprd": "", "preprd": ""}
+    {"uat": "", "prd": "", "cloudprd": "", "drprd": "", "preprd": ""}
   authUser:                                   # cmdb api auth user key
     {"uat": ""}
   pageSize:                                   # 一次请求CMDB获取的数据量大小
     {"uat": 500}
 
 itsm:
-  url: http://itsm.weoa.com
+  url:
   authUser:
   appid:
   appKey:
@@ -20,7 +20,7 @@ itsm:
 
 ims:
   url:
-    {"uat": "http://172.21.0.130:10815"}
+    {"uat": ""}
   authUserKey:
     {"uat": ""}
   pageSize:
