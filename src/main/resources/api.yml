@@ -3,15 +3,15 @@ cmdb:
   url:                                        # cmdb api host
     {"uat": "http://uat.cmdb.weoa.com", "prd": "", "cloudprd": "", "drprd": "", "preprd": ""}
   authUser:                                   # cmdb api auth user key
-    {"uat": "xyzjiao"}
+    {"uat": ""}
   pageSize:                                   # 一次请求CMDB获取的数据量大小
     {"uat": 500}
 
 itsm:
   url: http://itsm.weoa.com
-  authUser: xyzjiao
-  appid: 91
-  appKey: 8283c407-d0b7-4cfe-a3ad-7f3e1c806ca1
+  authUser:
+  appid:
+  appKey:
   otpdTeamIds:
     - 470600
     - 470700
@@ -22,6 +22,6 @@ ims:
   url:
     {"uat": "http://172.21.0.130:10815"}
   authUserKey:
-    {"uat": "xyzjiao"}
+    {"uat": ""}
   pageSize:
     {"uat": 500}
