@@ -155,6 +155,7 @@ public class CiController {
         }
 
         if (haveCmdbField) {
+            // TODO: 这里可以不同步，等定时同步，或者给个手动同步的按钮
             // 从CMDB同步该字段的数据，并更新到数据库中（全量同步一次）
             cmdbService.syncManyColumnCmdbDataAsync(ci);
         }
