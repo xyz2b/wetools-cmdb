@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Getter
@@ -27,6 +28,8 @@ public class Ci {
     private String env;
     @JsonProperty("syn_cmdb_cycle")
     private int synCmdbCycle;
+    @JsonProperty("filter")
+    private Map<String, Object> filter;
     @JsonProperty("filed_list")
     private List<CiField> fieldList;
     @JsonProperty("ci_data_last_update_date")

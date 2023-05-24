@@ -215,7 +215,7 @@ public class CmdbApiUtil {
     public CmdbResponse getCiDataByStartIndex(String type, Map<String, Object> filter, List<String> resultColumn, int startIndex, String env) {
         int pageSize = props.getPageSize().getOrDefault(env, 500);
 
-        return standardQueryCmdb(type, startIndex, pageSize,true, filter, new ArrayList<>(0), env);
+        return standardQueryCmdb(type, startIndex, pageSize,true, filter, resultColumn, env);
     }
 
     // 获取某个CI指定 过滤条件、返回字段、返回数量(startIndex, pageSize) 的数据

@@ -90,6 +90,16 @@ public class CiServiceImpl implements CiService {
     }
 
     @Override
+    public Boolean updating(Ci ci) {
+        return ciRepository.updating(ci.getEnName(), ci.getEnv());
+    }
+
+    @Override
+    public Boolean updated(Ci ci) {
+        return ciRepository.updated(ci.getEnName(), ci.getEnv());
+    }
+
+    @Override
     public Ci findCi(String ci_name, String env) {
         CiDao ciDao = ciRepository.findCi(ci_name, env);
 
@@ -137,6 +147,15 @@ public class CiServiceImpl implements CiService {
         boolean deleteCiRst = ciRepository.deleteCi(ciName, env);
 
         long deleteFieldNum = fieldRepository.deleteCiAllField(ciName, env);
+
+        return deleteCiRst && deleteFieldNum > 0;
+    }
+
+    @Override
+    public boolean deleteCiPhysics(String ciName, String env) {
+        boolean deleteCiRst = ciRepository.deleteCiPhysics(ciName, env);
+
+        long deleteFieldNum = fieldRepository.deleteCiAllFieldPhysics(ciName, env);
 
         return deleteCiRst && deleteFieldNum > 0;
     }

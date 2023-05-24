@@ -17,4 +17,6 @@ public class CiQueryConsist {
     public static final String QUERY_FILTER_CI = "ci";
     public static final String QUERY_FILTER_IS_CMDB = "is_cmdb";
     public static final String QUERY_FILTER_IS_DELETE = "is_delete";
+    public static final String QUERY_FILTER_IS_UPDATING = "is_updating";
+
 }

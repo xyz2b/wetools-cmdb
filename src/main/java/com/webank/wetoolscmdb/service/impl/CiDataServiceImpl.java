@@ -69,13 +69,12 @@ public class CiDataServiceImpl implements CiDataService {
 
     @Override
     public int updateCmdbCiData(Ci ci, List<Map<String, Object>> data) {
-        // TODO: TEST 根据guid比对cmdb同步过来的数据和当前DB中存储的数据，存在就更新，不存在就新建
+        // 根据guid比对cmdb同步过来的数据和当前DB中存储的数据，存在就更新，不存在就新建
 
         List<Document> documentList = new ArrayList<>(data.size());
 
         for(Map<String, Object> d : data) {
             String guid = (String) d.get(CmdbApiConsist.QUERY_FILTER_GUID);
-
             Document document = ciDataRepository.findOneByGuid(ci.getEnName(), ci.getEnv(), guid);
             if (document == null) { // 新的一条数据，需要加上该CI本身不是CMDB的字段，这些字段默认值置为空
                 document = new Document();

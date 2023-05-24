@@ -16,6 +16,8 @@ public interface CiRepository {
     CiDao findCi(String ciName, String env);
 
     Boolean isUpdating(String ciName, String env);
+    Boolean updating(String ciName, String env);
+    Boolean updated(String ciName, String env);
 
     boolean updateCronId(String ciName, String env, Long cronId);
 
@@ -23,5 +25,5 @@ public interface CiRepository {
     String getLastUpdateTime(String ciName, String env, String lastUpdateTime);
 
     boolean deleteCi(String ciName, String env);
-
+    boolean deleteCiPhysics(String ciName, String env);
 }

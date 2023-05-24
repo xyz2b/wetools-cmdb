@@ -11,9 +11,7 @@ public interface CmdbService {
 
     List<CiField> getCmdbCiField(String ciName, List<String> fieldName, String env);
 
-    // 返回同步成功的记录数
-    void syncCmdbAllDataAsync(Ci ci);
-    void syncManyColumnCmdbAllDataAsyncAndRegisterCron(Ci ci);
+    void syncManyColumnCmdbDataAsyncAndRegisterCron(Ci ci);
 
     int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter);
 

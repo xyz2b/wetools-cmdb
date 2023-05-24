@@ -5,6 +5,7 @@ import com.mongodb.client.result.UpdateResult;
 import com.webank.wetoolscmdb.constant.consist.CiCollectionNamePrefix;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
+import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,5 +146,16 @@ public class FieldRepositoryImpl implements FieldRepository {
 
         UpdateResult updateResult = mongoTemplate.updateMulti(query, update, collectionName);
         return updateResult.getModifiedCount();
+    }
+
+    @Override
+    public long deleteCiAllFieldPhysics(String ci_name, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ci_name).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
+        query.addCriteria(criteria);
+
+        List<FieldDao> result = mongoTemplate.findAllAndRemove(query, FieldDao.class, collectionName);
+        return result.size();
     }
 }

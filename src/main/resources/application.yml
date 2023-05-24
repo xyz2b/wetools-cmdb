@@ -8,7 +8,7 @@ spring:
 
 logging:
   level:
-    root: debug
+    root: info
   config: classpath:logback-spring.xml
   file:
     path: logs/springboot.log

@@ -83,6 +83,40 @@ public class CiRepositoryImpl implements CiRepository {
     }
 
     @Override
+    public Boolean updating(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_UPDATING).is(false);
+        query.addCriteria(criteria);
+
+        Update update = new Update();
+        update.set(CiQueryConsist.QUERY_FILTER_IS_UPDATING, true);
+
+        CiDao ciDao = mongoTemplate.findAndModify(query, update, CiDao.class, collectionName);
+        if (ciDao == null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean updated(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_UPDATING).is(true);
+        query.addCriteria(criteria);
+
+        Update update = new Update();
+        update.set(CiQueryConsist.QUERY_FILTER_IS_UPDATING, false);
+
+        CiDao ciDao = mongoTemplate.findAndModify(query, update, CiDao.class, collectionName);
+        if (ciDao == null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public boolean updateCronId(String ciName, String env, Long cronId) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
         Query query = new Query();
@@ -146,6 +180,22 @@ public class CiRepositoryImpl implements CiRepository {
         update.set(CiQueryConsist.QUERY_FILTER_IS_DELETE, true);
 
         CiDao ciDao = mongoTemplate.findAndModify(query, update, CiDao.class, collectionName);
+        if (ciDao == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public boolean deleteCiPhysics(String ciName, String env) {
+        String collectionName = CiCollectionNamePrefix.CMDB_METADATA_CI + "." + env;
+
+        Query query = new Query();
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_EN_NAME).is(ciName);
+        query.addCriteria(criteria);
+
+        CiDao ciDao = mongoTemplate.findAndRemove(query, CiDao.class, collectionName);
         if (ciDao == null) {
             return false;
         } else {

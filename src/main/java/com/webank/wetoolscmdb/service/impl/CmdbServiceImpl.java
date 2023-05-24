@@ -136,77 +136,6 @@ public class CmdbServiceImpl implements CmdbService {
         return ciFieldList;
     }
 
-    @Override
-    public void syncCmdbAllDataAsync(Ci ci) {
-        CallbackTaskScheduler.add(new CallbackTask<Integer>() {
-            @Override
-            public Integer execute() throws Exception {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-
-                // sync cmdb all data
-                // 数据库中没有对应的CI元信息
-                if(ciService.isUpdating(ci) == null) {
-                    return -2;
-                }
-                // 只有CI不是updating状态才可以去更新同步
-                // TODO: 需要一把分布式锁
-                if(ciService.isUpdating(ci)) {
-                    return -1;
-                }
-
-                // 从CMDB同步数据
-                int successInsertSum = 0;
-                int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, startIndex, env);
-                List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                successInsertSum += ciDataService.insertCiData(ci, cmdbData);
-
-                while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, cmdbApiUtil.nextIndex(cmdbResponse), env);
-                    cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successInsertSum += ciDataService.insertCiData(ci, cmdbData);
-                }
-
-                return successInsertSum;
-            }
-
-            @Override
-            public void onSuccess(Integer syncSuccessDataCount) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                if (syncSuccessDataCount == -1) {
-                    log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", type, env);
-                    return;
-                } else if (syncSuccessDataCount == -2) {
-                    log.error("type: [{}], env: [{}] ci metadata is not existed", type, env);
-                    return;
-                }
-                int totalDataCount = getCmdbDataAllCount(type, env);
-                if (syncSuccessDataCount < totalDataCount) {
-                    log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
-                } else {
-                    log.info("sync data from cmdb success, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
-                    // 更新CI的最后更新时间(ci_data_last_update_date)为通过来的CMDB数据中更新时间最晚的，直接对DB中数据的更新时间进行排序取最晚的一个
-                    String lastUpdateTime = ciDataService.getLastUpdateTime(type, env);
-                    if (lastUpdateTime != null) {
-                        ciService.updateLastUpdateTime(type, env, lastUpdateTime);
-                    } else {
-                        log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", type, env);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t.getMessage());
-                t.printStackTrace();
-            }
-        });
-    }
-
     // 新增CMDB字段时候进行同步使用
     @Override
     public void syncManyColumnCmdbDataAsync(Ci ci) {
@@ -215,6 +144,10 @@ public class CmdbServiceImpl implements CmdbService {
             public Integer execute() throws Exception {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
+                Map<String, Object> filter = ci.getFilter();
+                if(filter == null) {
+                    filter = new HashMap<>(0);
+                }
 
                 // 数据库中没有对应的CI元信息
                 if(ciService.isUpdating(ci) == null) {
@@ -232,12 +165,12 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successUpdateSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex, env);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                 successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
                 }
@@ -249,6 +182,10 @@ public class CmdbServiceImpl implements CmdbService {
             public void onSuccess(Integer syncSuccessDataCount) {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
+                Map<String, Object> filter = ci.getFilter();
+                if(filter == null) {
+                    filter = new HashMap<>(0);
+                }
 
                 if (syncSuccessDataCount == -1) {
                     log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", type, env);
@@ -258,7 +195,7 @@ public class CmdbServiceImpl implements CmdbService {
                     return;
                 }
 
-                int totalDataCount = getCmdbDataAllCount(type, env);
+                int totalDataCount = getCmdbDataCountByFilter(type, filter, env);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
                 } else {
@@ -277,19 +214,22 @@ public class CmdbServiceImpl implements CmdbService {
             public void onFailure(Throwable t) {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
-                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t.getMessage());
-                t.printStackTrace();
+                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t);
             }
         });
     }
 
     @Override
-    public void syncManyColumnCmdbAllDataAsyncAndRegisterCron(Ci ci) {
+    public void syncManyColumnCmdbDataAsyncAndRegisterCron(Ci ci) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
             @Override
             public Integer execute() throws Exception {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
+                Map<String, Object> filter = ci.getFilter();
+                if(filter == null) {
+                    filter = new HashMap<>(0);
+                }
 
                 // 数据库中没有对应的CI元信息
                 if(ciService.isUpdating(ci) == null) {
@@ -303,6 +243,9 @@ public class CmdbServiceImpl implements CmdbService {
 
                 List<String> resultColumn = new ArrayList<>();
                 for(CiField ciField : ci.getFieldList()) {
+                    if(ciField.getEnName() == null) {
+                        continue;
+                    }
                     if(ciField.getIsCmdb()) {
                         resultColumn.add(ciField.getEnName());
                     }
@@ -312,12 +255,12 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successInsertSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, startIndex, env);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                 successInsertSum += ciDataService.insertCiData(ci, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
                     successInsertSum += ciDataService.insertCiData(ci, cmdbData);
                 }
@@ -329,6 +272,10 @@ public class CmdbServiceImpl implements CmdbService {
             public void onSuccess(Integer syncSuccessDataCount) {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
+                Map<String, Object> filter = ci.getFilter();
+                if(filter == null) {
+                    filter = new HashMap<>(0);
+                }
 
                 if (syncSuccessDataCount == -1) {
                     log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", type, env);
@@ -338,7 +285,7 @@ public class CmdbServiceImpl implements CmdbService {
                     return;
                 }
 
-                int totalDataCount = getCmdbDataAllCount(type, env);
+                int totalDataCount = getCmdbDataCountByFilter(type, filter, env);
                 if (syncSuccessDataCount < totalDataCount) {
                     log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
                 } else {
@@ -424,12 +371,10 @@ public class CmdbServiceImpl implements CmdbService {
             public void onFailure(Throwable t) {
                 String type = ci.getEnName();
                 String env = ci.getEnv();
-                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t.getMessage());
-                t.printStackTrace();
+                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t);
             }
         });
     }
-
 
     @Override
     public int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter) {
@@ -472,6 +417,15 @@ public class CmdbServiceImpl implements CmdbService {
                 }
             }
         }
+
+        // 更新CI的最后更新时间(ci_data_last_update_date)为通过来的CMDB数据中更新时间最晚的，直接对DB中数据的更新时间进行排序取最晚的一个
+        String lastUpdateTime = ciDataService.getLastUpdateTime(type, env);
+        if (lastUpdateTime != null) {
+            ciService.updateLastUpdateTime(type, env, lastUpdateTime);
+        } else {
+            log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", type, env);
+        }
+
         return successUpdateSum;
     }
 

@@ -48,8 +48,10 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
 
         // 查询CI，拿出上次最后更新时间，本次更新的过滤条件filter就是updateTime大于该时间
         Ci ci = ciService.findCi(jobParams.getEnName(), jobParams.getEnv());
-        Map<String, Object> filter = new HashMap<>();
-
+        Map<String, Object> filter = ci.getFilter();
+        if(filter == null) {
+            filter = new HashMap<>(0);
+        }
         CmdbQueryDateFilter cmdbQueryDateFilter = new CmdbQueryDateFilter();
         Map<String, String> query = new HashMap<>();
         query.put(CmdbApiConsist.QUERY_FILTER_GREATER_THAN, ci.getCiDataLastUpdateDate());

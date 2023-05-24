@@ -41,7 +41,7 @@ public class CmdbServiceImplTest {
         Ci ci = new Ci();
         ci.setEnName("wb_host");
         ci.setEnv("uat");
-        cmdbService.syncCmdbAllDataAsync(ci);
+        cmdbService.syncManyColumnCmdbDataAsync(ci);
 
         Thread.sleep(200000000);
     }

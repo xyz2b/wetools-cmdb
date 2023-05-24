@@ -144,7 +144,7 @@ public class CiDataRepositoryImpl implements CiDataRepository {
             Map<String, Object> map = new HashMap<>(filedDocuments.size());
             for(Document filedDocument : filedDocuments) {
                 String fieldName = filedDocument.getString(CiQueryConsist.QUERY_FILTER_EN_NAME);
-                Object value = document.getDate(fieldName);
+                Object value = document.getString(fieldName);
                 map.putIfAbsent(fieldName, value);
             }
             rst.add(map);

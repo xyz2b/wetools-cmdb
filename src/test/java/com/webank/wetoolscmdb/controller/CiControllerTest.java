@@ -35,7 +35,7 @@ public class CiControllerTest {
 
     @Test
     public void createCi() throws Exception {
-        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  null, null, null, null, null, null, null);
+        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  null, null, null, null, null, null, null, null);
         String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ci);
         // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
         mockMvc.perform(MockMvcRequestBuilders
@@ -58,7 +58,7 @@ public class CiControllerTest {
         ciField.setEnName("all_i");
         ciFieldList.add(ciField);
 
-        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  ciFieldList, null, null, null, null, null, null);
+        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  null, ciFieldList, null, null, null, null, null, null);
         String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ci);
         // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
         mockMvc.perform(MockMvcRequestBuilders
@@ -108,7 +108,7 @@ public class CiControllerTest {
         ciField.setEnName("test");
         ciFieldList.add(ciField);
 
-        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  ciFieldList, null, null, null, null, null, null);
+        Ci ci = new Ci("0", "主机", "wb_host", true, "uat", 30000,  null, ciFieldList, null, null, null, null, null, null);
         String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ci);
         // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
         mockMvc.perform(MockMvcRequestBuilders

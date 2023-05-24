@@ -8,6 +8,8 @@ public interface CiService {
     boolean existedCiMetaCollection(Ci ci);
     boolean existedCi(Ci ci);
     Boolean isUpdating(Ci ci);
+    Boolean updating(Ci ci);
+    Boolean updated(Ci ci);
     Ci findCi(String ci_name, String env);
     Long getCiSyncCmdbCronId(String ci_name, String env);
 
@@ -17,4 +19,5 @@ public interface CiService {
     String getLastUpdateTime(String ciName, String env, String lastUpdateTime);
 
     boolean deleteCi(String ciName, String env);
+    boolean deleteCiPhysics(String ciName, String env);
 }

@@ -46,6 +46,7 @@ public class CiController {
 
     @PostMapping(path = "/create", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response createCi(@RequestBody Ci ci) {
         // 判断要创建的CI是否已经存在，已经存在就不重复创建
         if(!ciService.existedCiMetaCollection(ci)) {
@@ -64,8 +65,9 @@ public class CiController {
             try {
                 ciFieldList = cmdbService.getCmdbCiAllField(ci);
             } catch (Exception e) {
-                ciService.deleteCi(ci.getEnName(), ci.getEnv());
-                e.printStackTrace();
+                ciService.deleteCiPhysics(ci.getEnName(), ci.getEnv());
+                log.error("get cmdb ci all field failed. error msg: {}", e.getMessage());
+                return new Response(WetoolsExceptionCode.REQUEST_CMDB_ERROR, "get cmdb ci all field failed", e.getMessage());
             }
 
             if(ciFieldList == null || ciFieldList.size() == 0) {
@@ -92,7 +94,10 @@ public class CiController {
 
         if(ci.getIsCmdb()) {
             // 异步任务，分批全量同步CMDB数据
-            cmdbService.syncManyColumnCmdbAllDataAsyncAndRegisterCron(ci);
+            if(ci.getSynCmdbCycle() <= 0) {
+                ci.setSynCmdbCycle(60000);
+            }
+            cmdbService.syncManyColumnCmdbDataAsyncAndRegisterCron(ci);
         }
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", ciRst);
@@ -100,6 +105,7 @@ public class CiController {
 
     @PostMapping(path = "/create_field", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response createCiField(@RequestBody Ci ci) {
         if(!ciService.existedCi(ci)) {
             return new Response(WetoolsExceptionCode.SUCCESS, "success", "ci is not existed");
@@ -140,16 +146,16 @@ public class CiController {
             List<CiField> ciFieldListRst = fieldService.insertAllField(ci);
             ci.setFieldList(ciFieldListRst);
 
-            Map<String, Object> map = new HashMap<>(ciFieldListRst.size());
-            for(CiField ciField : ciFieldListRst) {
-                map.put(ciField.getEnName(), null);
-            }
-            // 数据集合中所有文档都需要加上新加的字段
-            ciDataService.updateAll(ci.getEnName(), ci.getEnv(), map);
+//            Map<String, Object> map = new HashMap<>(ciFieldListRst.size());
+//            for(CiField ciField : ciFieldListRst) {
+//                map.put(ciField.getEnName(), null);
+//            }
+//            // 数据集合中所有文档都需要加上新加的字段
+//            ciDataService.updateAll(ci.getEnName(), ci.getEnv(), map);
         }
 
         if (haveCmdbField) {
-            // TODO: 从CMDB同步该字段的数据，并更新到数据库中（全量同步一次）
+            // 从CMDB同步该字段的数据，并更新到数据库中（全量同步一次）
             cmdbService.syncManyColumnCmdbDataAsync(ci);
         }
 
@@ -158,6 +164,7 @@ public class CiController {
 
     @PostMapping(path = "/delete", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response deleteCi(@RequestBody Ci ci) {
         boolean rst = ciService.deleteCi(ci.getEnName(), ci.getEnv());
 
@@ -171,6 +178,7 @@ public class CiController {
 
     @PostMapping(path = "/delete_field", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response deleteCiField(@RequestBody Ci ci) {
         int success = 0;
         for(CiField ciField : ci.getFieldList()) {
@@ -183,6 +191,7 @@ public class CiController {
     // 手动新增的数据，GUID都为空，调用该接口新增数据时，需要将CI所有字段都填充好，没有值的为null
     @PostMapping(path = "/add_data", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response addCiData(@RequestBody CiData ciData) {
         Ci ci = new Ci();
         ci.setEnv(ciData.getEnv());
@@ -195,6 +204,7 @@ public class CiController {
     // 目前只能修改非CMDB的数据，更新时只需要填充需要更新的字段即可，但是需要带上_id，会根据ID去寻找需要更新的记录是哪条
     @PostMapping(path = "/update_data", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response updateCiData(@RequestBody CiData ciData) {
         if(ciData.getData() == null || ciData.getData().size() == 0) {
             return new Response(WetoolsExceptionCode.SUCCESS, "success", "data is not existed");
@@ -214,6 +224,7 @@ public class CiController {
 
     @PostMapping(path = "/get", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response getCiMetadata(@RequestBody Ci ci) {
          Ci ciMetadata = ciService.findCi(ci.getEnName(), ci.getEnv());
 
@@ -222,6 +233,7 @@ public class CiController {
 
     @PostMapping(path = "/get_data", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
     public Response getCiData(@RequestBody Ci ci) {
         // TODO: 分页
         List<Map<String, Object>> rst = ciDataService.getAllData(ci.getEnName(), ci.getEnv());
