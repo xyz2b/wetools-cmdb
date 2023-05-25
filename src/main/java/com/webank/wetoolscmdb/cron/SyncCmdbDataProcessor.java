@@ -16,6 +16,7 @@ import tech.powerjob.worker.log.OmsLogger;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component

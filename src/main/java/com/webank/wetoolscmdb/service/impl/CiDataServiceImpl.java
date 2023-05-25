@@ -145,4 +145,13 @@ public class CiDataServiceImpl implements CiDataService {
         }
         return ciDataRepository.getAllData(ciName, env);
     }
+
+    @Override
+    public List<Map<String, Object>> getData(String ciName, String env, Map<String, Object> filter, List<String> resultColumn) {
+        CiDao ciDao = ciRepository.findCi(ciName, env);
+        if (ciDao == null) {
+            return null;
+        }
+        return ciDataRepository.getData(ciName, env, filter, resultColumn);
+    }
 }

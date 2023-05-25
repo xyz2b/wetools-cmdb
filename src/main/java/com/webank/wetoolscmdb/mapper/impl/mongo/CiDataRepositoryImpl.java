@@ -152,5 +152,58 @@ public class CiDataRepositoryImpl implements CiDataRepository {
         return rst;
     }
 
+    @Override
+    public List<Map<String, Object>> getData(String ciName, String env, Map<String, Object> filter, List<String> resultColumn) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
+        Query queryData = new Query();
+        if(resultColumn != null && resultColumn.size() > 0) {
+            for(String column : resultColumn) {
+                queryData.fields().include(column);
+            }
+        }
+
+        List<Criteria> criteriaList = new ArrayList<>();
+        if(filter != null && filter.size() > 0) {
+            for(Map.Entry<String, Object> e : filter.entrySet()) {
+                if(e.getValue() instanceof String) {
+                    String value = (String) e.getValue();
+                    String[] values = value.split(",");
+                    criteriaList.add(Criteria.where(e.getKey()).in(Arrays.asList(values)));
+                } else if(e.getValue() instanceof Map) {
+                    Map<String, String> dateRange = (Map<String, String>) e.getValue();
+
+                    for(Map.Entry<String, String> entry : dateRange.entrySet()) {
+                        switch (entry.getKey()) {
+                            case ">":
+                                criteriaList.add(Criteria.where(e.getKey()).gt(entry.getValue()));
+                                break;
+                            case "<":
+                                criteriaList.add(Criteria.where(e.getKey()).lt(entry.getValue()));
+                                break;
+                            case ">=":
+                                criteriaList.add(Criteria.where(e.getKey()).gte(entry.getValue()));
+                                break;
+                            case "<=":
+                                criteriaList.add(Criteria.where(e.getKey()).lte(entry.getValue()));
+                                break;
+                            default:
+                                throw new RuntimeException("date range operator is must be < <= > >=");
+                        }
+                    }
+                } else {
+                    criteriaList.add(Criteria.where(e.getKey()).is(e.getValue()));
+                }
+            }
+        }
+        Criteria criteriaData = new Criteria();
+        if(criteriaList.size() > 0) {
+            criteriaData.andOperator(criteriaList);
+        }
+        queryData.addCriteria(criteriaData);
+
+        List<Document> documents = mongoTemplate.find(queryData, Document.class, collectionName);
+
+        return new ArrayList<>(documents);
+    }
 }

@@ -236,8 +236,25 @@ public class CiController {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public Response getCiData(@RequestBody Ci ci) {
-        // TODO: 分页
-        List<Map<String, Object>> rst = ciDataService.getAllData(ci.getEnName(), ci.getEnv());
+        if(ci.getEnName() == null || ci.getEnName().length() <= 0) {
+            return new Response(WetoolsExceptionCode.FAILED, "ci enName must be not null", null);
+        }
+        if(ci.getEnv() == null || ci.getEnv().length() <= 0) {
+            return new Response(WetoolsExceptionCode.FAILED, "ci env must be not null", null);
+        }
+        List<String> resultColumn = new ArrayList<>(ci.getFieldList().size());
+        for(CiField field : ci.getFieldList()) {
+            resultColumn.add(field.getEnName());
+        }
+
+        List<Map<String, Object>> rst;
+        try {
+            // TODO: 分页
+            rst = ciDataService.getData(ci.getEnName(), ci.getEnv(), ci.getFilter(), resultColumn);
+        } catch (Exception e) {
+            log.warn("get data failed, ", e);
+            return new Response(WetoolsExceptionCode.FAILED, "get data failed, " + e.getMessage(), null);
+        }
 
         return new Response(WetoolsExceptionCode.SUCCESS, "success", rst);
     }

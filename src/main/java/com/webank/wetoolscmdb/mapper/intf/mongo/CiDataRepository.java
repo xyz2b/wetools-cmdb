@@ -22,4 +22,5 @@ public interface CiDataRepository {
     long updateAll(String ciName, String env, Map<String, Object> data);
 
     List<Map<String, Object>> getAllData(String ciName, String env);
+    List<Map<String, Object>> getData(String ciName, String env, Map<String, Object> filter, List<String> resultColumn);
 }
