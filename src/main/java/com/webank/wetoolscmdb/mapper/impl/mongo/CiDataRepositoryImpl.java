@@ -1,11 +1,14 @@
 package com.webank.wetoolscmdb.mapper.impl.mongo;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.result.UpdateResult;
 import com.webank.wetoolscmdb.constant.consist.CiCollectionNamePrefix;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiDataRepository;
+import com.webank.wetoolscmdb.model.dto.CiDataUpdate;
+import com.webank.wetoolscmdb.utils.MongoBathUpdateOptions;
+import com.webank.wetoolscmdb.utils.MongoBathUpdateUtil;
+import com.webank.wetoolscmdb.utils.MongoQueryUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -109,21 +112,38 @@ public class CiDataRepositoryImpl implements CiDataRepository {
         return finalList;
     }
 
+    // 批量更新，更新根据filter指定字段过滤出来的记录（filter指定的字段一定需要出现在data中）
+    // upsert: 不存在插入不插入新纪录(true 插入，false 不插入)
+    // multi : 默认是false,只更新找到的第一条记录，如果这个参数为true,就把按条件查出来多条记录全部更新
+    // 比如更新_id in (1,2,3)的记录的dcn为XG1和create_by为xyzjiao
+    // data=[{"_id","1", "dcn="XG1", "create_by":"xyzjiao"},{"_id","2", "dcn="XG1", "create_by":"xyzjiao"},{"_id","3", "dcn="XG1", "create_by":"xyzjiao"}]
+    // filter=["dcn", "create_by"]
     @Override
-    public long updateAll(String ciName, String env, Map<String, Object> data) {
+    public int update(String ciName, String env, List<CiDataUpdate> data, boolean upsert, boolean multi) throws RuntimeException {
         String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
-        Query query = new Query();
+        List<MongoBathUpdateOptions> mongoBathUpdateOptionsList = new ArrayList<>();
+        for(CiDataUpdate ciDataUpdate : data) {
+            Map<String, Object> d = ciDataUpdate.getData();
+            MongoBathUpdateOptions options = new MongoBathUpdateOptions();
+            options.setUpsert(upsert);
+            options.setMulti(multi);
 
-        Update update = new Update();
-        for(Map.Entry<String, Object> entry : data.entrySet()) {
-            update.set(entry.getKey(), entry.getValue());
+            Query query = MongoQueryUtil.makeQueryByFilter(ciDataUpdate.getFilter());
+            options.setQuery(query);
+            Update update = MongoQueryUtil.makeUpdate(d);
+            options.setUpdate(update);
+            mongoBathUpdateOptionsList.add(options);
+
         }
 
-        UpdateResult updateResult = mongoTemplate.updateMulti(query, update, collectionName);
-
-        return updateResult.getModifiedCount();
+        return MongoBathUpdateUtil.bathUpdate(mongoTemplate, collectionName, mongoBathUpdateOptionsList);
     }
+
+    // 更新filter匹配出来记录的多个字段（filter中多个条件的关系是与）
+    // 比如更新dcn=XG1并且domain=工具域的所有记录的dcn为XG2和create_by为xyzjiao
+    // data={"dcn":"XG2","create_by":"xyzjiao"}
+    // filter={"dcn":"XG1","domain":"工具域"}
 
     @Override
     public List<Map<String, Object>> getAllData(String ciName, String env) {
@@ -156,54 +176,10 @@ public class CiDataRepositoryImpl implements CiDataRepository {
     public List<Map<String, Object>> getData(String ciName, String env, Map<String, Object> filter, List<String> resultColumn) {
         String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
-        Query queryData = new Query();
-        if(resultColumn != null && resultColumn.size() > 0) {
-            for(String column : resultColumn) {
-                queryData.fields().include(column);
-            }
-        }
-
-        List<Criteria> criteriaList = new ArrayList<>();
-        if(filter != null && filter.size() > 0) {
-            for(Map.Entry<String, Object> e : filter.entrySet()) {
-                if(e.getValue() instanceof String) {
-                    String value = (String) e.getValue();
-                    String[] values = value.split(",");
-                    criteriaList.add(Criteria.where(e.getKey()).in(Arrays.asList(values)));
-                } else if(e.getValue() instanceof Map) {
-                    Map<String, String> dateRange = (Map<String, String>) e.getValue();
-
-                    for(Map.Entry<String, String> entry : dateRange.entrySet()) {
-                        switch (entry.getKey()) {
-                            case ">":
-                                criteriaList.add(Criteria.where(e.getKey()).gt(entry.getValue()));
-                                break;
-                            case "<":
-                                criteriaList.add(Criteria.where(e.getKey()).lt(entry.getValue()));
-                                break;
-                            case ">=":
-                                criteriaList.add(Criteria.where(e.getKey()).gte(entry.getValue()));
-                                break;
-                            case "<=":
-                                criteriaList.add(Criteria.where(e.getKey()).lte(entry.getValue()));
-                                break;
-                            default:
-                                throw new RuntimeException("date range operator is must be < <= > >=");
-                        }
-                    }
-                } else {
-                    criteriaList.add(Criteria.where(e.getKey()).is(e.getValue()));
-                }
-            }
-        }
-        Criteria criteriaData = new Criteria();
-        if(criteriaList.size() > 0) {
-            criteriaData.andOperator(criteriaList);
-        }
-        queryData.addCriteria(criteriaData);
-
+        Query queryData = MongoQueryUtil.makeQueryByFilter(filter, resultColumn);
         List<Document> documents = mongoTemplate.find(queryData, Document.class, collectionName);
-
         return new ArrayList<>(documents);
     }
+
+
 }

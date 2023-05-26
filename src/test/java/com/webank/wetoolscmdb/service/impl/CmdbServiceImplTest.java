@@ -23,7 +23,7 @@ public class CmdbServiceImplTest {
     public void testGetCmdbCiAllField() {
         Ci ci = new Ci();
         ci.setEnName("wb_host");
-        System.out.println(cmdbService.getCmdbCiAllField(ci));
+        System.out.println(cmdbService.getCmdbCiAllField(ci.getEnName(), ci.getEnv()));
     }
 
     @Test
@@ -36,13 +36,5 @@ public class CmdbServiceImplTest {
         ciFieldList.add(ciField);
     }
 
-    @Test
-    public void testSyncCmdbAllDataAsync() throws InterruptedException {
-        Ci ci = new Ci();
-        ci.setEnName("wb_host");
-        ci.setEnv("uat");
-        cmdbService.syncManyColumnCmdbDataAsync(ci);
 
-        Thread.sleep(200000000);
-    }
 }

@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.constant.consist.*;
 import com.webank.wetoolscmdb.cron.SyncCmdbDataProcessor;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiRequest;
 import com.webank.wetoolscmdb.model.dto.CiField;
+import com.webank.wetoolscmdb.model.dto.CiFieldCreateRequest;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponse;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbResponseDataHeader;
 import com.webank.wetoolscmdb.service.intf.*;
+import com.webank.wetoolscmdb.utils.PowerJobApi;
 import com.webank.wetoolscmdb.utils.cmdb.CmdbApiUtil;
 import com.webank.wetoolscmdb.utils.cocurrent.CallbackTask;
 import com.webank.wetoolscmdb.utils.cocurrent.CallbackTaskScheduler;
@@ -32,20 +35,20 @@ public class CmdbServiceImpl implements CmdbService {
     CmdbApiUtil cmdbApiUtil;
     @Autowired
     CiService ciService;
+
     @Autowired
-    CronService cronService;
+    PowerJobApi powerJobApi;
+
     @Autowired
     CiDataService ciDataService;
 
     @Autowired
     FieldService fieldService;
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
-    public List<CiField> getCmdbCiAllField(Ci ci) {
+    public List<CiField> getCmdbCiAllField(String ciName, String env) {
 
-        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ci.getEnName(), ci.getEnv());
+        Map<String, CmdbResponseDataHeader> cmdbCiFieldAttributes = cmdbApiUtil.getCiFiledAttributes(ciName, env);
 
         List<CiField> ciFieldList = new ArrayList<>(cmdbCiFieldAttributes.size());
 
@@ -136,43 +139,43 @@ public class CmdbServiceImpl implements CmdbService {
         return ciFieldList;
     }
 
-    // 新增CMDB字段时候进行同步使用
+    // 新增CMDB字段时候进行同步使用，异步同步增量数据
     @Override
-    public void syncManyColumnCmdbDataAsync(Ci ci) {
+    public void syncManyColumnCmdbDataAsync(CiFieldCreateRequest ciFieldCreateRequest) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
             @Override
             public Integer execute() throws Exception {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                Map<String, Object> filter = ci.getFilter();
+                String ciName = ciFieldCreateRequest.getCiName();
+                String env = ciFieldCreateRequest.getEnv();
+                Map<String, Object> filter = ciFieldCreateRequest.getFilter();
                 if(filter == null) {
                     filter = new HashMap<>(0);
                 }
 
                 // 数据库中没有对应的CI元信息
-                if(ciService.isUpdating(ci) == null) {
+                if(ciService.isUpdating(ciName, env) == null) {
                     return -2;
                 }
                 // 只有CI不是updating状态才可以去更新同步
                 // TODO: 需要一把分布式锁
-                if(ciService.isUpdating(ci)) {
+                if(ciService.isUpdating(ciName, env)) {
                     return -1;
                 }
 
                 // 查询该CI所有的Field，拿出是CMDB的字段
-                List<String> resultColumn = fieldService.findCiAllCmdbFieldName(type, env);
+                List<String> resultColumn = fieldService.findCiAllCmdbFieldName(ciName, env);
 
                 // 从CMDB同步数据
                 int successUpdateSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
+                successUpdateSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
+                    successUpdateSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
                 }
 
                 return successUpdateSum;
@@ -180,69 +183,70 @@ public class CmdbServiceImpl implements CmdbService {
 
             @Override
             public void onSuccess(Integer syncSuccessDataCount) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                Map<String, Object> filter = ci.getFilter();
+                String ciName = ciFieldCreateRequest.getCiName();
+                String env = ciFieldCreateRequest.getEnv();
+                Map<String, Object> filter = ciFieldCreateRequest.getFilter();
                 if(filter == null) {
                     filter = new HashMap<>(0);
                 }
 
                 if (syncSuccessDataCount == -1) {
-                    log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", type, env);
+                    log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", ciName, env);
                     return;
                 } else if (syncSuccessDataCount == -2) {
-                    log.error("type: [{}], env: [{}] ci metadata is not existed", type, env);
+                    log.error("type: [{}], env: [{}] ci metadata is not existed", ciName, env);
                     return;
                 }
 
-                int totalDataCount = getCmdbDataCountByFilter(type, filter, env);
+                int totalDataCount = getCmdbDataCountByFilter(ciName, filter, env);
                 if (syncSuccessDataCount < totalDataCount) {
-                    log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
+                    log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", ciName, env, syncSuccessDataCount, totalDataCount);
                 } else {
-                    log.info("sync data from cmdb success, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
+                    log.info("sync data from cmdb success, type: [{}], env: [{}], sync success: [{}], total: [{}]", ciName, env, syncSuccessDataCount, totalDataCount);
                     // 更新CI的最后更新时间(ci_data_last_update_date)为通过来的CMDB数据中更新时间最晚的，直接对DB中数据的更新时间进行排序取最晚的一个
-                    String lastUpdateTime = ciDataService.getLastUpdateTime(type, env);
+                    String lastUpdateTime = ciDataService.getLastUpdateTime(ciName, env);
                     if (lastUpdateTime != null) {
-                        ciService.updateLastUpdateTime(type, env, lastUpdateTime);
+                        ciService.updateLastUpdateTime(ciName, env, lastUpdateTime);
                     } else {
-                        log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", type, env);
+                        log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", ciName, env);
                     }
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t);
+                String ciName = ciFieldCreateRequest.getCiName();
+                String env = ciFieldCreateRequest.getEnv();
+                log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",ciName, env, t);
             }
         });
     }
 
+    // 首次创建CMDB CI时候进行同步使用，异步同步增量数据并注册定时任务
     @Override
-    public void syncManyColumnCmdbDataAsyncAndRegisterCron(Ci ci) {
+    public void syncManyColumnCmdbDataByFilterAsyncAndRegisterCron(CiRequest ciRequest) {
         CallbackTaskScheduler.add(new CallbackTask<Integer>() {
             @Override
             public Integer execute() throws Exception {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                Map<String, Object> filter = ci.getFilter();
+                String ciName = ciRequest.getEnName();
+                String env = ciRequest.getEnv();
+                Map<String, Object> filter = ciRequest.getFilter();
                 if(filter == null) {
                     filter = new HashMap<>(0);
                 }
 
                 // 数据库中没有对应的CI元信息
-                if(ciService.isUpdating(ci) == null) {
+                if(ciService.isUpdating(ciName, env) == null) {
                     return -2;
                 }
                 // 只有CI不是updating状态才可以去更新同步
                 // TODO: 需要一把分布式锁
-                if(ciService.isUpdating(ci)) {
+                if(ciService.isUpdating(ciName, env)) {
                     return -1;
                 }
 
                 List<String> resultColumn = new ArrayList<>();
-                for(CiField ciField : ci.getFieldList()) {
+                for(CiField ciField : ciRequest.getFieldList()) {
                     if(ciField.getEnName() == null) {
                         continue;
                     }
@@ -255,14 +259,14 @@ public class CmdbServiceImpl implements CmdbService {
                 // 从CMDB同步数据
                 int successInsertSum = 0;
                 int startIndex = 0;
-                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
+                CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, startIndex, env);
                 List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                successInsertSum += ciDataService.insertCiData(ci, cmdbData);
+                successInsertSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
 
                 while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
+                    cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successInsertSum += ciDataService.insertCiData(ci, cmdbData);
+                    successInsertSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
                 }
 
                 return successInsertSum;
@@ -270,126 +274,94 @@ public class CmdbServiceImpl implements CmdbService {
 
             @Override
             public void onSuccess(Integer syncSuccessDataCount) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
-                Map<String, Object> filter = ci.getFilter();
+                String ciName = ciRequest.getEnName();
+                String env = ciRequest.getEnv();
+                Map<String, Object> filter = ciRequest.getFilter();
                 if(filter == null) {
                     filter = new HashMap<>(0);
                 }
 
                 if (syncSuccessDataCount == -1) {
-                    log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", type, env);
+                    log.info("type: [{}], env: [{}] is updating!!!, give up this sync.", ciName, env);
                     return;
                 } else if (syncSuccessDataCount == -2) {
-                    log.error("type: [{}], env: [{}] ci metadata is not existed", type, env);
+                    log.error("type: [{}], env: [{}] ci metadata is not existed", ciName, env);
                     return;
                 }
 
-                int totalDataCount = getCmdbDataCountByFilter(type, filter, env);
+                int totalDataCount = getCmdbDataCountByFilter(ciName, filter, env);
                 if (syncSuccessDataCount < totalDataCount) {
-                    log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
+                    log.warn("sync data from cmdb failed, type: [{}], env: [{}], sync success: [{}], total: [{}]", ciName, env, syncSuccessDataCount, totalDataCount);
                 } else {
-                    log.info("sync data from cmdb success, type: [{}], env: [{}], sync success: [{}], total: [{}]", type, env, syncSuccessDataCount, totalDataCount);
+                    log.info("sync data from cmdb success, type: [{}], env: [{}], sync success: [{}], total: [{}]", ciName, env, syncSuccessDataCount, totalDataCount);
                     // 更新CI的最后更新时间(ci_data_last_update_date)为通过来的CMDB数据中更新时间最晚的，直接对DB中数据的更新时间进行排序取最晚的一个
-                    String lastUpdateTime = ciDataService.getLastUpdateTime(type, env);
+                    String lastUpdateTime = ciDataService.getLastUpdateTime(ciName, env);
                     if (lastUpdateTime != null) {
-                        ciService.updateLastUpdateTime(type, env, lastUpdateTime);
+                        ciService.updateLastUpdateTime(ciName, env, lastUpdateTime);
                     } else {
-                        log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", type, env);
+                        log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", ciName, env);
                     }
 
                     // 定时增量同步CMDB数据，周期为 ci.getSynCmdbCycle()，向定时任务组件注册定时任务
-                    Long cronId = ciService.getCiSyncCmdbCronId(type, env);
+                    Long cronId = ciService.getCiSyncCmdbCronId(ciName, env);
                     if (cronId != null && cronId == -1) {
-                        SaveJobInfoRequest request = new SaveJobInfoRequest();
-                        request.setJobName(PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + type + "_" + env);
-                        request.setJobDescription(PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + type + "_" + env);
-                        Ci jobParam = new Ci();
-                        jobParam.setEnv(ci.getEnv());
-                        jobParam.setEnName(ci.getEnName());
+                        CiRequest jobParam = new CiRequest();
+                        jobParam.setEnv(ciRequest.getEnv());
+                        jobParam.setEnName(ciRequest.getEnName());
+                        jobParam.setIsCmdb(ciRequest.getIsCmdb());
+                        jobParam.setSynCmdbCycle(ciRequest.getSynCmdbCycle());
+                        jobParam.setFilter(ciRequest.getFilter());
 
-                        String jobParamJson = null;
-                        try {
-                            jobParamJson = objectMapper.writeValueAsString(jobParam);
-                        } catch (JsonGenerationException e) {
-                            e.printStackTrace();
-                        } catch (JsonMappingException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (jobParamJson == null) {
-                            log.error("type: [{}], env: [{}], cron job is create failed, because job param json dump failed ", type, env);
-                            return;
-                        } else {
-                            request.setJobParams(jobParamJson);
-                        }
-
-                        request.setTimeExpressionType(TimeExpressionType.FIXED_RATE);
-                        request.setTimeExpression(String.valueOf(ci.getSynCmdbCycle()));
-
-                        request.setExecuteType(ExecuteType.STANDALONE);
-                        request.setProcessorType(ProcessorType.BUILT_IN);
-
-                        request.setMaxInstanceNum(1);
-                        request.setConcurrency(1);
-
-                        request.setInstanceTimeLimit((long) 0);
-                        request.setInstanceRetryNum(0);
-                        request.setTaskRetryNum(1);
-                        request.setMinCpuCores(0);
-                        request.setMinMemorySpace(0);
-                        request.setMinDiskSpace(0);
-                        request.setMaxWorkerCount(0);
-                        request.setEnable(true);
-                        request.setDesignatedWorkers("");
-                        request.setNotifyUserIds(new ArrayList<>(0));
-
-                        request.setProcessorInfo(SyncCmdbDataProcessor.class.getName());
-
-                        Long cronJobId = cronService.createJob(request);
+                        Long cronJobId = powerJobApi.createCronJob(PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + ciName + "_" + env,
+                                PowerJobConsist.CMDB_SYNC_JOB_NAME_PREFIX + ciName + "_" + env,
+                                TimeExpressionType.FIXED_RATE,
+                                String.valueOf(ciRequest.getSynCmdbCycle()),
+                                ExecuteType.STANDALONE,
+                                ProcessorType.BUILT_IN,
+                                SyncCmdbDataProcessor.class.getName(),
+                                jobParam);
 
                         if(cronJobId == null) {
-                            log.error("type: [{}], env: [{}], cron job is create failed, because power job api return failed ", type, env);
+                            log.error("type: [{}], env: [{}], cron job is create failed, because power job api return failed ", ciName, env);
                         } else {
-                            if(ciService.updateCiSyncCmdbCronId(type, env, cronJobId)) {
-                                log.info("type: [{}], env: [{}], cron job is create success, cronId: [{}] ", type, env, cronJobId);
+                            if(ciService.updateCiSyncCmdbCronId(ciName, env, cronJobId)) {
+                                log.info("type: [{}], env: [{}], cron job is create success, cronId: [{}] ", ciName, env, cronJobId);
                             } else {
-                                log.error("type: [{}], env: [{}], cron job id write to db failed, but cron job is create success, cronId: [{}]", type, env, cronJobId);
+                                log.error("type: [{}], env: [{}], cron job id write to db failed, but cron job is create success, cronId: [{}]", ciName, env, cronJobId);
                             }
                         }
                     } else if(cronId != null && cronId != -1) {
-                        log.info("type: [{}], env: [{}], cron job is already existed, cronId: [{}] ", type, env, cronId);
+                        log.info("type: [{}], env: [{}], cron job is already existed, cronId: [{}] ", ciName, env, cronId);
                     } else {
-                        log.error("type: [{}], env: [{}], cronId field is not existed!!!", type, env);
+                        log.error("type: [{}], env: [{}], cronId field is not existed!!!", ciName, env);
                     }
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                String type = ci.getEnName();
-                String env = ci.getEnv();
+                String type = ciRequest.getEnName();
+                String env = ciRequest.getEnv();
                 log.error("sync data from cmdb job error, type: [{}], env: [{}], message: [{}]",type, env, t);
             }
         });
     }
 
+    // 定时任务同步CMDB CI使用，同步进行增量数据的同步
     @Override
     public int syncManyColumnCmdbDataByFilter(Ci ci, Map<String, Object> filter) {
-        String type = ci.getEnName();
+        String ciName = ci.getEnName();
         String env = ci.getEnv();
 
         // 数据库中没有对应的CI元信息
-        if(ciService.isUpdating(ci) == null) {
-            log.error("type: [{}], env: [{}] ci metadata is not existed", type, env);
+        if(ciService.isUpdating(ciName, env) == null) {
+            log.error("type: [{}], env: [{}] ci metadata is not existed", ciName, env);
             return -2;
         }
         // 只有CI不是updating状态才可以去更新同步
         // TODO: 需要一把分布式锁
-        if(ciService.isUpdating(ci)) {
-            log.info("type: [{}], env: [{}] is updating!!!, give up this sync", type, env);
+        if(ciService.isUpdating(ciName, env)) {
+            log.info("type: [{}], env: [{}] is updating!!!, give up this sync", ciName, env);
             return -1;
         }
 
@@ -404,31 +376,30 @@ public class CmdbServiceImpl implements CmdbService {
         // 从CMDB同步数据
         int successUpdateSum = 0;
         int startIndex = 0;
-        CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, startIndex, env);
+        CmdbResponse cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, startIndex, env);
         if(cmdbResponse.getHeaders().getContentRows() != 0) {
             List<Map<String, Object>> cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-            successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
+            successUpdateSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
 
             while (!cmdbApiUtil.isLastPage(cmdbResponse)) {
-                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(type, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
+                cmdbResponse = cmdbApiUtil.getCiDataByStartIndex(ciName, filter, resultColumn, cmdbApiUtil.nextIndex(cmdbResponse), env);
                 if(cmdbResponse.getHeaders().getContentRows() != 0) {
                     cmdbData = cmdbApiUtil.parseCmdbResponseData(cmdbResponse.getData());
-                    successUpdateSum += ciDataService.updateCmdbCiData(ci, cmdbData);
+                    successUpdateSum += ciDataService.updateCmdbCiDataByGuid(ciName, env, cmdbData);
                 }
             }
         }
 
         // 更新CI的最后更新时间(ci_data_last_update_date)为通过来的CMDB数据中更新时间最晚的，直接对DB中数据的更新时间进行排序取最晚的一个
-        String lastUpdateTime = ciDataService.getLastUpdateTime(type, env);
+        String lastUpdateTime = ciDataService.getLastUpdateTime(ciName, env);
         if (lastUpdateTime != null) {
-            ciService.updateLastUpdateTime(type, env, lastUpdateTime);
+            ciService.updateLastUpdateTime(ciName, env, lastUpdateTime);
         } else {
-            log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", type, env);
+            log.error("type: [{}], env: [{}], update ci metadata last update time failed!!!", ciName, env);
         }
 
         return successUpdateSum;
     }
-
 
     @Override
     public int getCmdbDataAllCount(String type, String env) {

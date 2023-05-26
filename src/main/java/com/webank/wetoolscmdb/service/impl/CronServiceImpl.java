@@ -21,4 +21,14 @@ public class CronServiceImpl implements CronService {
             return null;
         }
     }
+
+    @Override
+    public boolean disableJob(Long jobId) {
+        ResultDTO<Void> resultDTO = powerJobClient.disableJob(jobId);
+        if(resultDTO.isSuccess()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

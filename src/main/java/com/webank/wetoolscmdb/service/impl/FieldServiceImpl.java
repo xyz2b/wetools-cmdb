@@ -5,7 +5,6 @@ import com.webank.wetoolscmdb.constant.consist.CiFiledType;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
-import com.webank.wetoolscmdb.model.dto.Ci;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
 import com.webank.wetoolscmdb.service.intf.FieldService;
@@ -31,9 +30,7 @@ public class FieldServiceImpl implements FieldService {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     @Override
-    public boolean createFieldCollection(Ci ci) {
-        String env = ci.getEnv();
-
+    public boolean createFieldCollection(String env) {
         // 创建CI字段的元数据集合
         MongoCollection<Document> ciCollection = fieldRepository.createFieldCollection(env);
         if (ciCollection == null) {
@@ -45,10 +42,7 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public List<CiField> insertAllField(Ci ci) {
-        String env = ci.getEnv();
-        List<CiField> fieldList = ci.getFieldList();
-
+    public List<CiField> insertAllField(String ciName, String env, List<CiField> fieldList) {
         List<FieldDao> fieldDaoList = new ArrayList<>(fieldList.size());
         for(CiField ciField : fieldList) {
             // 将元数据插入元数据集合中
@@ -58,7 +52,7 @@ public class FieldServiceImpl implements FieldService {
             Date now = new Date();
             fieldDao.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
             fieldDao.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(now));
-            fieldDao.setCi(ci.getEnName());
+            fieldDao.setCi(ciName);
 
             fieldDaoList.add(fieldDao);
         }
@@ -80,8 +74,7 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public boolean existedFieldMetaCollection(Ci ci) {
-        String env = ci.getEnv();
+    public boolean existedFieldMetaCollection(String env) {
         return fieldRepository.fieldCollectionExisted(env);
     }
 
@@ -93,6 +86,11 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public List<String> findCiAllCmdbFieldName(String ciName, String env) {
         return fieldRepository.findCiAllCmdbFieldName(ciName, env);
+    }
+
+    @Override
+    public List<Document> findCiFiled(String ciName, String env, List<String> resultColumn) {
+        return fieldRepository.findCiFiled(ciName, env, resultColumn);
     }
 
     @Override
@@ -160,8 +158,27 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public boolean deleteField(String ciName, String env, String fieldName) {
-        return fieldRepository.deleteField(ciName, env, fieldName);
+    public List<CiField> defaultNoCmdbCiFields() {
+        List<CiField> defaultCiFields = new ArrayList<>();
+
+        Date date = new Date();
+
+        CiField isCmdb = new CiField();
+        isCmdb.setEnName(CiQueryConsist.QUERY_FILTER_IS_CMDB);
+        isCmdb.setIsCmdb(false);
+        isCmdb.setIsDisplay(false);
+        isCmdb.setType(CiFiledType.BOOLEAN);
+        isCmdb.setPredictLength(1);
+        isCmdb.setUpdatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        isCmdb.setCreatedDate(SIMPLE_DATE_FORMAT_MILLISECOND.format(date));
+        defaultCiFields.add(isCmdb);
+
+        return defaultCiFields;
+    }
+
+    @Override
+    public int deleteField(String ciName, String env, List<String> fieldNames) {
+        return fieldRepository.deleteField(ciName, env, fieldNames);
     }
 
     @Override

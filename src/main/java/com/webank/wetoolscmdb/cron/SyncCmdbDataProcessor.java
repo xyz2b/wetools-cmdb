@@ -3,6 +3,7 @@ package com.webank.wetoolscmdb.cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiRequest;
 import com.webank.wetoolscmdb.model.dto.cmdb.CmdbQueryDateFilter;
 import com.webank.wetoolscmdb.service.intf.CiService;
 import com.webank.wetoolscmdb.service.intf.CmdbService;
@@ -16,7 +17,6 @@ import tech.powerjob.worker.log.OmsLogger;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -41,15 +41,16 @@ public class SyncCmdbDataProcessor implements BasicProcessor {
         // JobParams是需要进行CMDB同步的CI信息，只需要填充ci.en_name以及ci.env即可
         CommonUtils.requireNonNull(context.getJobParams(), "sync ci can't be empty!!!");
 
-        Ci jobParams = objectMapper.readValue(context.getJobParams(), Ci.class);
-
-        if(!ciService.existedCi(jobParams)) {
+        CiRequest jobParams = objectMapper.readValue(context.getJobParams(), CiRequest.class);
+        String ciName = jobParams.getEnName();
+        String env = jobParams.getEnv();
+        if(!ciService.existedCi(ciName, env)) {
             return new ProcessResult(false, "env " + jobParams.getEnv() + ", ci " + jobParams.getEnName() + " is not existed");
         }
 
         // 查询CI，拿出上次最后更新时间，本次更新的过滤条件filter就是updateTime大于该时间
-        Ci ci = ciService.findCi(jobParams.getEnName(), jobParams.getEnv());
-        Map<String, Object> filter = ci.getFilter();
+        Ci ci = ciService.findCi(ciName, env);
+        Map<String, Object> filter = jobParams.getFilter();
         if(filter == null) {
             filter = new HashMap<>(0);
         }

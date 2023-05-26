@@ -1,6 +1,7 @@
 package com.webank.wetoolscmdb.utils;
 
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiRequest;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
@@ -32,7 +33,7 @@ public class TransferUtil {
         ci.setId(ciDao.getId());
     }
 
-    public static void transferCiToCiDao(Ci ci, CiDao ciDao) {
+    public static void transferCiToCiDao(CiRequest ci, CiDao ciDao) {
         if(ci.getIsCmdb()) {
             ciDao.setSynCmdbCycle(ci.getSynCmdbCycle());
         }

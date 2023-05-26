@@ -2,24 +2,19 @@ package com.webank.wetoolscmdb.service.impl;
 
 import com.mongodb.client.MongoCollection;
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
-import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
-import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiDataRepository;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiDataUpdate;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.service.intf.CiDataService;
-import com.webank.wetoolscmdb.utils.exception.WetoolsCmdbException;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -34,18 +29,14 @@ public class CiDataServiceImpl implements CiDataService {
     FieldRepository fieldRepository;
 
     @Override
-    public boolean existedCiDataCollection(Ci ci) {
-        String type = ci.getEnName();
-        String env = ci.getEnv();
-        return ciDataRepository.ciDataCollectionExisted(type, env);
+    public boolean existedCiDataCollection(String ciName, String env) {
+        return ciDataRepository.ciDataCollectionExisted(ciName, env);
     }
 
     @Override
-    public boolean createCiDataCollection(Ci ci) {
-        String type = ci.getEnName();
-        String env = ci.getEnv();
+    public boolean createCiDataCollection(String ciName, String env) {
         // 创建元数据集合
-        MongoCollection<Document> ciCollection = ciDataRepository.createCiDataCollection(type, env);
+        MongoCollection<Document> ciCollection = ciDataRepository.createCiDataCollection(ciName, env);
         if (ciCollection == null) {
             log.error("create ci collection failed: [{}]", env);
             return false;
@@ -54,87 +45,43 @@ public class CiDataServiceImpl implements CiDataService {
     }
 
     @Override
-    public int insertCiData(Ci ci, List<Map<String, Object>> data) {
+    public int insertCiData(String ciName, String env, List<Map<String, Object>> data) {
         if(data == null || data.size() == 0) {
             return 0;
         }
 
-        // TODO: 如果插入的数据缺了一部分字段，需要补齐，值为null
-        List<String> ciAllFieldName = fieldRepository.findCiAllFieldName(ci.getEnName(), ci.getEnv());
-
-        List<Map<String, Object>> rst = ciDataRepository.insertAll(ci.getEnName(), ci.getEnv(), data);
+        List<Map<String, Object>> rst = ciDataRepository.insertAll(ciName, env, data);
 
         return rst.size();
     }
 
     @Override
-    public int updateCmdbCiData(Ci ci, List<Map<String, Object>> data) {
+    public int updateCmdbCiDataByGuid(String ciName, String env, List<Map<String, Object>> data) throws RuntimeException {
         // 根据guid比对cmdb同步过来的数据和当前DB中存储的数据，存在就更新，不存在就新建
 
-        List<Document> documentList = new ArrayList<>(data.size());
-
+        List<CiDataUpdate> ciDataUpdateList = new ArrayList<>();
         for(Map<String, Object> d : data) {
-            String guid = (String) d.get(CmdbApiConsist.QUERY_FILTER_GUID);
-            Document document = ciDataRepository.findOneByGuid(ci.getEnName(), ci.getEnv(), guid);
-            if (document == null) { // 新的一条数据，需要加上该CI本身不是CMDB的字段，这些字段默认值置为空
-                document = new Document();
-                document.putAll(d);
-
-                List<String> fields = fieldRepository.findCiAllNonCmdbFieldName(ci.getEnName(), ci.getEnv());
-                for(String field : fields) {
-                    document.put(field, null);
-                }
-
-            } else {    // 已存在的一条数据
-                document.putAll(d);
+            Map<String, Object> filter = new HashMap<>();
+            Object value = d.get(CiQueryConsist.QUERY_FILTER_GUID);
+            if(value == null) {
+                throw new RuntimeException("update cmdb ci data by guid: guid must not be null");
             }
-
-            documentList.add(document);
+            filter.put(CiQueryConsist.QUERY_FILTER_GUID, value);
+            CiDataUpdate ciDataUpdate = new CiDataUpdate(d, filter);
+            ciDataUpdateList.add(ciDataUpdate);
         }
-
-        List<Document> rst = ciDataRepository.saveAll(ci.getEnName(), ci.getEnv(), documentList);
-
-        return rst.size();
+        return ciDataRepository.update(ciName, env, ciDataUpdateList, true, false);
     }
 
     @Override
-    public int updateCiData(Ci ci, List<Map<String, Object>> data) {
-        List<Document> documentList = new ArrayList<>(data.size());
-
-        for(Map<String, Object> d : data) {
-            String id = (String) d.get(CiQueryConsist.QUERY_FILTER_ID);
-            if(id == null) {
-                return -1;
-            }
-
-            ObjectId objectId = new ObjectId(id);
-            d.put(CiQueryConsist.QUERY_FILTER_ID, objectId);
-
-            // TODO: 更新的字段可能已经被逻辑删除
-            Document document = ciDataRepository.findOneById(ci.getEnName(), ci.getEnv(), id);
-            if (document == null) { // 新的一条数据，就插入，TODO: 插入时需要补齐没有的字段
-                document = new Document();
-                document.putAll(d);
-            } else {    // 已存在的一条数据，就更新
-                document.putAll(d);
-            }
-
-            documentList.add(document);
-        }
-
-        List<Document> rst = ciDataRepository.saveAll(ci.getEnName(), ci.getEnv(), documentList);
-
-        return rst.size();
+    public long updateCiData(Ci ci, List<CiDataUpdate> data) throws RuntimeException {
+        // TODO: 需要判断插入的数据的字段是否已经存在
+        return ciDataRepository.update(ci.getEnName(), ci.getEnv(), data, false, false);
     }
 
     @Override
     public String getLastUpdateTime(String ciName, String env) {
         return ciDataRepository.getLastUpdateTime(ciName, env);
-    }
-
-    @Override
-    public long updateAll(String ciName, String env, Map<String, Object> data) {
-        return ciDataRepository.updateAll(ciName, env, data);
     }
 
     @Override

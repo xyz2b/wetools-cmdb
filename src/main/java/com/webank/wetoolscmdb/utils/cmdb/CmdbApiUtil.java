@@ -103,6 +103,7 @@ public class CmdbApiUtil {
                     log.warn("unknown cmdb response data field type, code: [{}], field_name: [{}], type: [{}]", WetoolsExceptionCode.UNKNOWN_CMDB_TYPE_ERROR, field.getKey(), fieldAttributes.get(field.getKey()).getDataType());
                 }
             }
+            content.put(CiQueryConsist.QUERY_FILTER_IS_CMDB, true);
             contents.add(content);
         }
 

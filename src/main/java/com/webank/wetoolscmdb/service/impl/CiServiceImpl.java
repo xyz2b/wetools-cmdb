@@ -5,6 +5,7 @@ import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiRepository;
 import com.webank.wetoolscmdb.mapper.intf.mongo.FieldRepository;
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiRequest;
 import com.webank.wetoolscmdb.model.dto.CiField;
 import com.webank.wetoolscmdb.model.entity.mongo.CiDao;
 import com.webank.wetoolscmdb.model.entity.mongo.FieldDao;
@@ -34,7 +35,7 @@ public class CiServiceImpl implements CiService {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT_MILLISECOND = new SimpleDateFormat(CmdbApiConsist.DATE_FORMAT_MILLISECOND);
 
     @Override
-    public Ci insertOneCi(Ci ci) {
+    public Ci insertOneCi(CiRequest ci) {
         String env = ci.getEnv();
 
         // 将元数据插入元数据集合中
@@ -62,8 +63,7 @@ public class CiServiceImpl implements CiService {
     }
 
     @Override
-    public boolean createCiMetaCollection(Ci ci) {
-        String env = ci.getEnv();
+    public boolean createCiMetaCollection(String env) {
         // 创建元数据集合
         MongoCollection<Document> ciCollection = ciRepository.createCiCollection(env);
         if (ciCollection == null) {
@@ -74,19 +74,18 @@ public class CiServiceImpl implements CiService {
     }
 
     @Override
-    public boolean existedCiMetaCollection(Ci ci) {
-        String env = ci.getEnv();
+    public boolean existedCiMetaCollection(String env) {
         return ciRepository.ciCollectionExisted(env);
     }
 
     @Override
-    public boolean existedCi(Ci ci) {
-        return ciRepository.findCi(ci.getEnName(), ci.getEnv()) != null;
+    public boolean existedCi(String ciName, String env) {
+        return ciRepository.findCi(ciName, env) != null;
     }
 
     @Override
-    public Boolean isUpdating(Ci ci) {
-        return ciRepository.isUpdating(ci.getEnName(), ci.getEnv());
+    public Boolean isUpdating(String ciName, String env) {
+        return ciRepository.isUpdating(ciName, env);
     }
 
     @Override

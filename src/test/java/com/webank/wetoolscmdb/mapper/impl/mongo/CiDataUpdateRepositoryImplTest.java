@@ -1,6 +1,7 @@
 package com.webank.wetoolscmdb.mapper.impl.mongo;
 
 import com.webank.wetoolscmdb.mapper.intf.mongo.CiDataRepository;
+import com.webank.wetoolscmdb.model.dto.CiDataUpdate;
 import org.bson.Document;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class CiDataRepositoryImplTest {
+public class CiDataUpdateRepositoryImplTest {
     @Autowired
     CiDataRepository ciDataRepository;
 
@@ -52,11 +53,18 @@ public class CiDataRepositoryImplTest {
     }
 
     @Test
-    public void testUpdateAll() {
+    public void testUpdate() {
         Map<String, Object> map = new HashMap<>();
-        map.put("test1", "111");
-        map.put("test2", "222");
-        ciDataRepository.updateAll("wb_host", "uat", map);
+        map.put("dcn", "3");
+        map.put("module", "333");
+        Map<String, Object> filter = new HashMap<>();
+        filter.put("guid", "100390024743222");
+
+        CiDataUpdate ciDataUpdate = new CiDataUpdate(map, filter);
+        List<CiDataUpdate> ciDataUpdateList = new ArrayList<>();
+        ciDataUpdateList.add(ciDataUpdate);
+
+        System.out.println(ciDataRepository.update("wb_host", "uat", ciDataUpdateList, false, false));
     }
 
     @Test
@@ -64,11 +72,12 @@ public class CiDataRepositoryImplTest {
         String ciName = "wb_host";
         String env = "uat";
         Map<String, Object> filter = new HashMap<>();
-        Map<String, String> dataRange = new HashMap<>();
-        dataRange.put(">", "2023-05-23");
-        dataRange.put("<", "2023-05-24");
-        filter.put("created_date", dataRange);
-        filter.put("host_lanip", "172.21.7.40");
+//        Map<String, String> dataRange = new HashMap<>();
+//        dataRange.put(">", "2023-05-23");
+//        dataRange.put("<", "2023-05-24");
+//        filter.put("created_date", dataRange);
+//        filter.put("host_lanip", "172.21.7.40");
+        filter.put("_id", "646f099de87e016baf640686");
         List<String> resultColumn = new ArrayList<>();
         resultColumn.add("host_lanip");
         resultColumn.add("dcn");
@@ -76,5 +85,30 @@ public class CiDataRepositoryImplTest {
         for(Map<String, Object> m : r) {
             System.out.println(m);
         }
+    }
+
+    @Test
+    public void testUpdateBatch() {
+        String ciName = "wb_host";
+        String env = "uat";
+        List<CiDataUpdate> ciDataUpdateList = new ArrayList<>();
+
+        Map<String, Object> filter1 = new HashMap<>();
+        filter1.put("_id", "646f099de87e016baf640686");
+        Map<String, Object> data1 = new HashMap<>();
+        data1.put("module", "555");
+        data1.put("dcn", "55");
+        CiDataUpdate ciDataUpdate1 = new CiDataUpdate(data1, filter1);
+        ciDataUpdateList.add(ciDataUpdate1);
+
+        Map<String, Object> filter2 = new HashMap<>();
+        filter2.put("_id", "646f099de87e016baf640400");
+        Map<String, Object> data2 = new HashMap<>();
+        data2.put("module", "333");
+        data2.put("dcn", "3");
+        CiDataUpdate ciDataUpdate2 = new CiDataUpdate(data2, filter2);
+        ciDataUpdateList.add(ciDataUpdate2);
+
+        System.out.println(ciDataRepository.update(ciName, env, ciDataUpdateList, false, false));
     }
 }

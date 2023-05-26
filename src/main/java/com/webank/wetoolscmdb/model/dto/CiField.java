@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import javax.validation.constraints.NotEmpty;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,8 +16,10 @@ public class CiField {
     @JsonProperty("cn_name")
     private String cnName;
     @JsonProperty("en_name")
+    @NotEmpty
     private String enName;
     @JsonProperty("is_cmdb")
+    @NonNull
     private Boolean isCmdb;
     @JsonProperty("is_display")
     private Boolean isDisplay;

@@ -1,13 +1,14 @@
 package com.webank.wetoolscmdb.service.intf;
 
 import com.webank.wetoolscmdb.model.dto.Ci;
+import com.webank.wetoolscmdb.model.dto.CiRequest;
 
 public interface CiService {
-    Ci insertOneCi(Ci ci);
-    boolean createCiMetaCollection(Ci ci);
-    boolean existedCiMetaCollection(Ci ci);
-    boolean existedCi(Ci ci);
-    Boolean isUpdating(Ci ci);
+    Ci insertOneCi(CiRequest ci);
+    boolean createCiMetaCollection(String env);
+    boolean existedCiMetaCollection(String env);
+    boolean existedCi(String ciName, String env);
+    Boolean isUpdating(String ciName, String env);
     Boolean updating(Ci ci);
     Boolean updated(Ci ci);
     Ci findCi(String ci_name, String env);

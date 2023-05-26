@@ -1,10 +1,9 @@
 package com.webank.wetoolscmdb.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import java.util.Map;
 
 @Data
@@ -13,10 +12,11 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CiData {
-    @JsonProperty("en_name")
-    private String enName;
-    @JsonProperty("env")
-    private String env;
-    private List<Map<String, Object>> data;
+public class CiDataUpdate {
+    @NotEmpty
+    private Map<String, Object> data;
+    private Map<String, Object> filter;
 }
+
+
+

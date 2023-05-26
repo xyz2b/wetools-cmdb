@@ -4,4 +4,5 @@ import tech.powerjob.common.request.http.SaveJobInfoRequest;
 
 public interface CronService {
     Long createJob(SaveJobInfoRequest request);
+    boolean disableJob(Long jobId);
 }

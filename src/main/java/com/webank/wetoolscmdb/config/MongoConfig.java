@@ -3,8 +3,13 @@ package com.webank.wetoolscmdb.config;
 import com.mongodb.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -13,6 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -20,6 +26,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 // mongodb client配置类
 @Configuration("MongoConfig")  //等价于XML中配置bean
 public class MongoConfig {
+    @Autowired
+    MongoIdToStringConverter mongoIdToStringConverter;
+
     /**
      * 此Bean也是可以不显示定义的，如果我们没有显示定义生成MongoTemplate实例，
      * SpringBoot利用我们配置好的MongoDbFactory在配置类中生成一个MongoTemplate，
@@ -49,14 +58,19 @@ public class MongoConfig {
      * @return 转换器对象
      */
     @Bean("mappingMongoConverter")
-    public MappingMongoConverter mappingMongoConverter(MongoDatabaseFactory factory, MongoMappingContext context,
-                                                       MongoCustomConversions conversions) {
+    public MappingMongoConverter mappingMongoConverter(MongoDatabaseFactory factory, MongoMappingContext context, BeanFactory beanFactory,
+                                                       @Qualifier("mongoCusConversions") CustomConversions conversions) {
         DbRefResolver dbRefResolver = new DefaultDbRefResolver(factory);
         MappingMongoConverter mappingConverter = new MappingMongoConverter(dbRefResolver, context);
         mappingConverter.setCustomConversions(conversions);
         // remove _class field
         mappingConverter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return mappingConverter;
+    }
+    @Bean(name = "mongoCusConversions")
+    @Primary
+    public CustomConversions mongoCustomConversions() {
+        return new MongoCustomConversions(Arrays.asList(mongoIdToStringConverter));
     }
 
     /**
