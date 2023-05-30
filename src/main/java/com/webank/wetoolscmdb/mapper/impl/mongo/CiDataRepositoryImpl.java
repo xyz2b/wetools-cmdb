@@ -181,5 +181,28 @@ public class CiDataRepositoryImpl implements CiDataRepository {
         return new ArrayList<>(documents);
     }
 
+    @Override
+    public List<Map<String, Object>> getDataByLimit(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, int limit) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
 
+        Query queryData = MongoQueryUtil.makeQueryByFilter(filter, resultColumn).limit(limit);
+        List<Document> documents = mongoTemplate.find(queryData, Document.class, collectionName);
+        return new ArrayList<>(documents);
+    }
+
+    @Override
+    public List<Map<String, Object>> getDataByLimitSort(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, Map<String, Boolean> sortByList, int limit) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
+        Query queryData = MongoQueryUtil.makeQueryByFilterSort(filter, resultColumn, sortByList).limit(limit);
+        List<Document> documents = mongoTemplate.find(queryData, Document.class, collectionName);
+        return new ArrayList<>(documents);
+    }
+
+    @Override
+    public long count(String ciName, String env, Map<String, Object> filter) {
+        String collectionName = CiCollectionNamePrefix.CMDB_DATA + "." + ciName  + "." + env;
+
+        Query queryData = MongoQueryUtil.makeQueryByFilter(filter);
+        return mongoTemplate.count(queryData, collectionName);
+    }
 }

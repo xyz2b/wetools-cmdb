@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class CiDataUpdateRepositoryImplTest {
+public class CiDataRepositoryImplTest {
     @Autowired
     CiDataRepository ciDataRepository;
 
@@ -88,6 +88,48 @@ public class CiDataUpdateRepositoryImplTest {
     }
 
     @Test
+    public void testGetDataByLimit() {
+        String ciName = "wb_host";
+        String env = "uat";
+        Map<String, Object> filter = new HashMap<>();
+//        Map<String, String> dataRange = new HashMap<>();
+//        dataRange.put(">", "2023-05-23");
+//        dataRange.put("<", "2023-05-24");
+//        filter.put("created_date", dataRange);
+//        filter.put("host_lanip", "172.21.7.40");
+//        filter.put("_id", "646f099de87e016baf640686");
+//        List<String> resultColumn = new ArrayList<>();
+//        resultColumn.add("host_lanip");
+//        resultColumn.add("dcn");
+        List<Map<String, Object>> r = ciDataRepository.getDataByLimit(ciName, env, filter, null, 10);
+        for(Map<String, Object> m : r) {
+            System.out.println(m);
+        }
+    }
+
+    @Test
+    public void testGetDataByLimitSort() {
+        String ciName = "wb_host";
+        String env = "uat";
+        Map<String, Object> filter = new HashMap<>();
+//        Map<String, String> dataRange = new HashMap<>();
+//        dataRange.put(">", "2023-05-23");
+//        dataRange.put("<", "2023-05-24");
+//        filter.put("created_date", dataRange);
+//        filter.put("host_lanip", "172.21.7.40");
+//        filter.put("_id", "646f099de87e016baf640686");
+//        List<String> resultColumn = new ArrayList<>();
+//        resultColumn.add("host_lanip");
+//        resultColumn.add("dcn");
+        Map<String, Boolean> sort = new HashMap<>();
+        sort.put("_id", false);
+        List<Map<String, Object>> r = ciDataRepository.getDataByLimitSort(ciName, env, filter, null, sort, 10);
+        for(Map<String, Object> m : r) {
+            System.out.println(m);
+        }
+    }
+
+    @Test
     public void testUpdateBatch() {
         String ciName = "wb_host";
         String env = "uat";
@@ -110,5 +152,16 @@ public class CiDataUpdateRepositoryImplTest {
         ciDataUpdateList.add(ciDataUpdate2);
 
         System.out.println(ciDataRepository.update(ciName, env, ciDataUpdateList, false, false));
+    }
+
+    @Test
+    public void testCount() {
+        String ciName = "wb_host";
+        String env = "uat";
+
+        Map<String, Object> filter = new HashMap<>();
+        filter.put("dcn", "XG1");
+
+        System.out.println(ciDataRepository.count(ciName, env, filter));
     }
 }

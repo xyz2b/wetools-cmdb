@@ -15,6 +15,14 @@ import java.util.Map;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CiDataResponse {
+    @JsonProperty("last_id")
+    private String lastId;
+    @JsonProperty("page_size")
+    private int pageSize;
+    @JsonProperty("total_rows")
+    private long totalRows;
+    @JsonProperty("return_rows")
+    private long returnRows;
     @JsonProperty("fields")
     private List<Document> ciFieldList;
     @JsonProperty("data")

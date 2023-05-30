@@ -1,5 +1,6 @@
 package com.webank.wetoolscmdb.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.wetoolscmdb.model.dto.*;
 import org.junit.Test;
@@ -174,6 +175,23 @@ public class CiControllerTest {
         // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/wetools-cmdb/api/ci/delete_field")
+                        .content(json.getBytes()) //传json参数
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                )
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(print());
+
+        Thread.sleep(200000000);
+    }
+
+    @Test
+    public void getCiData() throws Exception {
+        CiDataRequest ci = new CiDataRequest("wb_host", "uat", 100, null, null, null);
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ci);
+        // 执行一个RequestBuilder请求，会自动执行SpringMVC的流程并映射到相应的控制器执行处理；
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/wetools-cmdb/api/ci/get_data")
                         .content(json.getBytes()) //传json参数
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)

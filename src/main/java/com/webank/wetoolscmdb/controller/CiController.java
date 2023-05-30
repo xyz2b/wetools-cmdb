@@ -1,5 +1,6 @@
 package com.webank.wetoolscmdb.controller;
 
+import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import com.webank.wetoolscmdb.constant.consist.CmdbApiConsist;
 import com.webank.wetoolscmdb.constant.consist.WetoolsExceptionCode;
 import com.webank.wetoolscmdb.model.dto.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -122,7 +124,6 @@ public class CiController {
 
         if(!ciDataService.existedCiDataCollection(ciName, env)) {
             ciDataService.createCiDataCollection(ciName, env);
-            // TODO: 对guid设置唯一键索引
         }
 
         if(ciRequest.getIsCmdb()) {
@@ -182,13 +183,6 @@ public class CiController {
         if(fieldList.size() != 0) {
             List<CiField> ciFieldListRst = fieldService.insertAllField(ciName, env, fieldList);
             ciFieldCreateRequest.setCiFields(ciFieldListRst);
-
-//            Map<String, Object> map = new HashMap<>(ciFieldListRst.size());
-//            for(CiField ciField : ciFieldListRst) {
-//                map.put(ciField.getEnName(), null);
-//            }
-//            // 数据集合中所有文档都需要加上新加的字段
-//            ciDataService.updateAll(ci.getEnName(), ci.getEnv(), map);
         }
 
         if (haveCmdbField) {
@@ -284,7 +278,7 @@ public class CiController {
         return new Response(WetoolsExceptionCode.SUCCESS, "success", ciMetadata);
     }
 
-    // TODO: 连通CI字段的属性一起返回，前端根据字段属性决定是否展示
+    // 连通CI字段的属性一起返回，前端根据字段属性决定是否展示
     @PostMapping(path = "/get_data", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
@@ -304,14 +298,35 @@ public class CiController {
 
         List<Document> fieldList = fieldService.findCiFiled(ciName, env, resultColumn);
 
+        String lastId = ciDataRequest.getLastId();
+        int pageSize = ciDataRequest.getPageSize();
+        // 获取总数
+        long count = ciDataService.getCount(ciName, env, filter);
+
+        if(filter == null) {
+            filter = new HashMap<>(1);
+        }
+        if(lastId != null && !lastId.equals("")) {
+            Map<String, String> queryFilter = new HashMap<>();
+            queryFilter.put(">", lastId);
+            filter.put(CiQueryConsist.QUERY_FILTER_ID, queryFilter);
+        }
+
+        Map<String, Boolean> sort = new HashMap<>();
+        sort.put(CiQueryConsist.QUERY_FILTER_ID, false);
+
         List<Map<String, Object>> rst;
         try {
             // TODO: 分页
-            rst = ciDataService.getData(ciName, env, filter, resultColumn);
+            rst = ciDataService.getDataByLimitSort(ciName, env, filter, resultColumn, sort, pageSize);
         } catch (Exception e) {
             log.warn("get data failed, ", e);
             return new Response(WetoolsExceptionCode.FAILED, "get data failed, " + e.getMessage(), null);
         }
-        return new Response(WetoolsExceptionCode.SUCCESS, "success", new CiDataResponse(fieldList, rst));
+        if(rst.size() == 0) {
+            return new Response(WetoolsExceptionCode.FAILED, "rst data size is zero", null);
+        }
+        lastId = (String) rst.get(rst.size() - 1).get(CiQueryConsist.QUERY_FILTER_ID);
+        return new Response(WetoolsExceptionCode.SUCCESS, "success", new CiDataResponse(lastId, pageSize, count, rst.size(), fieldList, rst));
     }
 }

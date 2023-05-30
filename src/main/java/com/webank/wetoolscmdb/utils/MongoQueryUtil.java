@@ -2,6 +2,7 @@ package com.webank.wetoolscmdb.utils;
 
 import com.webank.wetoolscmdb.constant.consist.CiQueryConsist;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -37,18 +38,28 @@ public final class MongoQueryUtil {
                 } else if(e.getValue() instanceof Map) {
                     Map<String, String> dateRange = (Map<String, String>) e.getValue();
                     for(Map.Entry<String, String> entry : dateRange.entrySet()) {
+                        Object filterValue = entry.getValue();
+                        if(e.getKey().equals(CiQueryConsist.QUERY_FILTER_ID)) {
+                            String value = entry.getValue();
+                            if(value != null) {
+                                filterValue =  new ObjectId(value);
+                            } else {
+                                throw new RuntimeException("_id must not be null");
+                            }
+                        }
+
                         switch (entry.getKey()) {
                             case ">":
-                                criteriaList.add(Criteria.where(e.getKey()).gt(entry.getValue()));
+                                criteriaList.add(Criteria.where(e.getKey()).gt(filterValue));
                                 break;
                             case "<":
-                                criteriaList.add(Criteria.where(e.getKey()).lt(entry.getValue()));
+                                criteriaList.add(Criteria.where(e.getKey()).lt(filterValue));
                                 break;
                             case ">=":
-                                criteriaList.add(Criteria.where(e.getKey()).gte(entry.getValue()));
+                                criteriaList.add(Criteria.where(e.getKey()).gte(filterValue));
                                 break;
                             case "<=":
-                                criteriaList.add(Criteria.where(e.getKey()).lte(entry.getValue()));
+                                criteriaList.add(Criteria.where(e.getKey()).lte(filterValue));
                                 break;
                             default:
                                 throw new RuntimeException("date range operator is must be < <= > >=");
@@ -64,6 +75,24 @@ public final class MongoQueryUtil {
             criteriaData.andOperator(criteriaList);
         }
         query.addCriteria(criteriaData);
+        return query;
+    }
+
+    public static Query makeQueryByFilterSort(Map<String, Object> filter, List<String> resultColumn, Map<String, Boolean> sortByList) throws RuntimeException {
+        Query query = makeQueryByFilter(filter, resultColumn);
+        if(sortByList != null && sortByList.size() > 0) {
+            List<Sort.Order> orders = new ArrayList<>();
+            for(Map.Entry<String, Boolean> sortBy : sortByList.entrySet()) {
+                String sortKey = sortBy.getKey();
+                boolean isDesc = sortBy.getValue();
+
+                orders.add(new Sort.Order(isDesc ? Sort.Direction.DESC : Sort.Direction.ASC, sortKey));
+            }
+
+            query.with(Sort.by(orders));
+
+            query.fields().include(CiQueryConsist.QUERY_FILTER_ID);
+        }
         return query;
     }
 

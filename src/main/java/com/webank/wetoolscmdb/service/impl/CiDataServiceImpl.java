@@ -101,4 +101,27 @@ public class CiDataServiceImpl implements CiDataService {
         }
         return ciDataRepository.getData(ciName, env, filter, resultColumn);
     }
+
+    @Override
+    public List<Map<String, Object>> getDataByLimit(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, int limit) {
+        CiDao ciDao = ciRepository.findCi(ciName, env);
+        if (ciDao == null) {
+            return null;
+        }
+        return ciDataRepository.getDataByLimit(ciName, env, filter, resultColumn, limit);
+    }
+
+    @Override
+    public List<Map<String, Object>> getDataByLimitSort(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, Map<String, Boolean> sort, int limit) {
+        CiDao ciDao = ciRepository.findCi(ciName, env);
+        if (ciDao == null) {
+            return null;
+        }
+        return ciDataRepository.getDataByLimitSort(ciName, env, filter, resultColumn, sort, limit);
+    }
+
+    @Override
+    public long getCount(String ciName, String env, Map<String, Object> filter) {
+        return ciDataRepository.count(ciName, env, filter);
+    }
 }

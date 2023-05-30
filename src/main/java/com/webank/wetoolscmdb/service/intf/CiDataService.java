@@ -19,5 +19,8 @@ public interface CiDataService {
 
     List<Map<String, Object>> getAllData(String ciName, String env);
     List<Map<String, Object>> getData(String ciName, String env, Map<String, Object> filter, List<String> resultColumn);
+    List<Map<String, Object>> getDataByLimit(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, int limit);
+    List<Map<String, Object>> getDataByLimitSort(String ciName, String env, Map<String, Object> filter, List<String> resultColumn, Map<String, Boolean> sort, int limit);
 
+    long getCount(String ciName, String env, Map<String, Object> filter);
 }

@@ -108,7 +108,7 @@ public class FieldRepositoryImpl implements FieldRepository {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
         Query query = new Query();
         query.fields().include(CiQueryConsist.QUERY_FILTER_EN_NAME).exclude(CiQueryConsist.QUERY_FILTER_ID);
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_CMDB).is(false).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false);
+        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName).andOperator(Criteria.where(CiQueryConsist.QUERY_FILTER_IS_CMDB).is(false), Criteria.where(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false));
         query.addCriteria(criteria);
         List<Document> documents = mongoTemplate.find(query, Document.class, collectionName);
 
@@ -172,10 +172,12 @@ public class FieldRepositoryImpl implements FieldRepository {
     @Override
     public List<Document> findCiFiled(String ciName, String env, List<String> resultColumn) {
         String collectionName = CiCollectionNamePrefix.CMDB_METADATA_FIELD + "." + env;
-        Query query = new Query();
-        Criteria criteria = Criteria.where(CiQueryConsist.QUERY_FILTER_CI).is(ciName).and(CiQueryConsist.QUERY_FILTER_IS_DELETE).is(false)
-                .and(CiQueryConsist.QUERY_FILTER_EN_NAME).in(resultColumn);
-        query.addCriteria(criteria);
+
+        HashMap<String, Object> filter = new HashMap<>();
+        filter.put(CiQueryConsist.QUERY_FILTER_CI, ciName);
+        filter.put(CiQueryConsist.QUERY_FILTER_IS_DELETE, false);
+        Query query = MongoQueryUtil.makeQueryByFilter(filter, resultColumn);
+
         return mongoTemplate.find(query, Document.class, collectionName);
     }
 }
