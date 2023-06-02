@@ -317,7 +317,6 @@ public class CiController {
 
         List<Map<String, Object>> rst;
         try {
-            // TODO: 分页
             rst = ciDataService.getDataByLimitSort(ciName, env, filter, resultColumn, sort, pageSize);
         } catch (Exception e) {
             log.warn("get data failed, ", e);
